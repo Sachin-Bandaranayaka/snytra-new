@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bypass Delete Review</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #d9534f;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            cursor: pointer;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            background-color: #f9f9f9;
+            min-height: 100px;
+        }
+
+        .success {
+            color: green;
+        }
+
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Bypass Delete Review</h1>
+    <p>Use this page to delete a review directly without authentication</p>
+
+    <div class="form-group">
+        <label for="reviewId">Review ID:</label>
+        <input type="text" id="reviewId" placeholder="Enter review ID">
+    </div>
+
+    <button id="deleteBtn">Delete Review</button>
+
+    <div id="result">
+        <p>Results will appear here...</p>
+    </div>
+
+    <script>
+        document.getElementById('deleteBtn').addEventListener('click', async () => {
+            const reviewId = document.getElementById('reviewId').value.trim();
+            const resultDiv = document.getElementById('result');
+
+            if (!reviewId) {
+                resultDiv.innerHTML = '<p class="error">Please enter a review ID</p>';
+                return;
+            }
+
+            resultDiv.innerHTML = '<p>Deleting review...</p>';
+
+            try {
+                const response = await fetch(`/api/admin/reviews/bypass-delete?id=${reviewId}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+            <p class="success">Success! Review with ID ${data.id} was deleted.</p>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+          `;
+                } else {
+                    resultDiv.innerHTML = `
+            <p class="error">Error: ${data.error}</p>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+          `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+            }
+        });
+    </script>
+</body>
+
+</html>
