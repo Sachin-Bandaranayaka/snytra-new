@@ -22,6 +22,7 @@ interface AuthContextType {
     isAuthenticated: boolean;
     signOut: () => Promise<void>;
     updateUserProfile: (data: Partial<UserProfile>) => Promise<void>;
+    refreshSession: () => Promise<void>;
 }
 
 // Create auth context
@@ -31,6 +32,7 @@ const AuthContext = createContext<AuthContextType>({
     isAuthenticated: false,
     signOut: async () => { },
     updateUserProfile: async () => { },
+    refreshSession: async () => { },
 });
 
 // Auth provider props
@@ -40,7 +42,7 @@ interface AuthProviderProps {
 
 // Export the provider
 export function AuthProvider({ children }: AuthProviderProps) {
-    const { data: session, status } = useSession();
+    const { data: session, status, update } = useSession();
     const router = useRouter();
     const loading = status === "loading";
 
@@ -61,10 +63,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
             //   headers: { 'Content-Type': 'application/json' },
             //   body: JSON.stringify(data)
             // });
+            await refreshSession();
         } catch (error) {
             console.error("Error updating user profile:", error);
             throw error;
         }
+    };
+
+    // Refresh session function
+    const refreshSession = async () => {
+        await update();
     };
 
     const value = {
@@ -73,6 +81,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         isAuthenticated: !!session?.user,
         signOut: handleSignOut,
         updateUserProfile,
+        refreshSession,
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

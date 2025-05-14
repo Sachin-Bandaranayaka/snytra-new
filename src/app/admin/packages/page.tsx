@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, PencilIcon, TrashIcon, EyeSlashIcon, EyeIcon } from '@heroicons/react/24/outline';
 
 interface Package {
     id: number;
@@ -90,6 +90,29 @@ export default function PackagesPage() {
             setPackages(packages.map(pkg =>
                 pkg.id === id ? { ...pkg, is_active: !currentStatus } : pkg
             ));
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        }
+    };
+
+    const handleDeletePackage = async (id: number, name: string) => {
+        // Confirm deletion with the user
+        if (!window.confirm(`Are you sure you want to delete the "${name}" package? This action cannot be undone.`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/subscription-plans/${id}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to delete package');
+            }
+
+            // Remove the deleted package from state
+            setPackages(packages.filter(pkg => pkg.id !== id));
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An unknown error occurred');
         }
@@ -192,12 +215,23 @@ export default function PackagesPage() {
                                                 <button
                                                     onClick={() => handleEditPackage(pkg.id)}
                                                     className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 p-2 rounded-full mr-2 transition-colors"
+                                                    title="Edit package"
                                                 >
                                                     <PencilIcon className="h-4 w-4" />
                                                 </button>
+
                                                 <button
                                                     onClick={() => togglePackageStatus(pkg.id, pkg.is_active)}
-                                                    className={`${pkg.is_active ? 'text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100' : 'text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100'} p-2 rounded-full transition-colors`}
+                                                    className={`${pkg.is_active ? 'text-amber-600 hover:text-amber-900 bg-amber-50 hover:bg-amber-100' : 'text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100'} p-2 rounded-full mr-2 transition-colors`}
+                                                    title={pkg.is_active ? "Deactivate package" : "Activate package"}
+                                                >
+                                                    {pkg.is_active ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+                                                </button>
+
+                                                <button
+                                                    onClick={() => handleDeletePackage(pkg.id, pkg.name)}
+                                                    className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-2 rounded-full transition-colors"
+                                                    title="Delete package"
                                                 >
                                                     <TrashIcon className="h-4 w-4" />
                                                 </button>
