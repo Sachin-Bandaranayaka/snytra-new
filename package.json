@@ -36,7 +36,6 @@
     "@prisma/client": "^6.6.0",
     "@radix-ui/react-alert-dialog": "^1.1.11",
     "@radix-ui/react-select": "^2.2.2",
-    "@stackframe/stack": "^2.8.11",
     "@stripe/react-stripe-js": "^3.6.0",
     "@stripe/stripe-js": "^3.5.0",
     "@tiptap/extension-color": "^2.11.7",

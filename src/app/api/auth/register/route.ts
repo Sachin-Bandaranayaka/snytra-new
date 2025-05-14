@@ -1,118 +1,86 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db, executeQuery, getConnectionPool } from '@/lib/db';
-import { hash } from 'bcrypt';
+import { sql } from "@/db/postgres";
+import bcrypt from "bcryptjs";
+import { z } from "zod";
+
+// Validation schema for registration
+const registerSchema = z.object({
+    name: z.string().min(2, "Name must be at least 2 characters"),
+    email: z.string().email("Invalid email address"),
+    password: z.string().min(8, "Password must be at least 8 characters"),
+});
 
 export async function POST(req: NextRequest) {
     try {
-        const {
-            companyInfo,
-            contactDetails,
-            accountCredentials
-        } = await req.json();
+        const body = await req.json();
 
-        // Validate required inputs
-        if (!companyInfo.name || !contactDetails.contactEmail || !accountCredentials.password) {
+        // Validate the request body
+        const validation = registerSchema.safeParse(body);
+        if (!validation.success) {
             return NextResponse.json(
-                { error: 'Company name, contact email, and password are required' },
+                { message: "Validation failed", errors: validation.error.errors },
                 { status: 400 }
             );
         }
 
-        // Check if email already exists
-        const existingUsers = await executeQuery(
-            'SELECT id FROM users WHERE email = $1',
-            [contactDetails.contactEmail]
-        );
+        const { name, email, password } = validation.data;
+
+        // Check if user already exists
+        const existingUsers = await sql`
+            SELECT id FROM users WHERE email = ${email.toLowerCase()} LIMIT 1
+        `;
 
         if (existingUsers.length > 0) {
             return NextResponse.json(
-                { error: 'Email already in use' },
+                { message: "User with this email already exists" },
                 { status: 409 }
             );
         }
 
-        // Hash password
-        const passwordHash = await hash(accountCredentials.password, 10);
+        // Hash the password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
 
-        // Insert user into database
-        const userData = await executeQuery(
-            `INSERT INTO users (
+        // Create the user
+        const result = await sql`
+            INSERT INTO users (
                 name, 
                 email, 
-                username,
-                password_hash,
-                phone,
-                role
+                password_hash, 
+                role, 
+                created_at, 
+                updated_at
+            )
+            VALUES (
+                ${name}, 
+                ${email.toLowerCase()}, 
+                ${hashedPassword}, 
+                ${'customer'}, 
+                NOW(), 
+                NOW()
             ) 
-            VALUES ($1, $2, $3, $4, $5, $6) 
-            RETURNING id, name, email`,
-            [
-                contactDetails.contactName,
-                contactDetails.contactEmail,
-                accountCredentials.username,
-                passwordHash,
-                contactDetails.phoneNumber,
-                contactDetails.jobTitle
-            ]
-        );
+            RETURNING id, name, email, role
+        `;
 
-        const newUser = userData[0];
+        const newUser = result[0];
 
-        // Create restaurant entry
-        await executeQuery(
-            `INSERT INTO restaurants (
-                user_id, 
-                name, 
-                industry,
-                business_size,
-                num_locations
-            ) 
-            VALUES ($1, $2, $3, $4, $5)`,
-            [
-                newUser.id,
-                companyInfo.name,
-                companyInfo.industry,
-                companyInfo.businessSize,
-                companyInfo.numLocations
-            ]
-        );
-
-        // Send welcome email
-        try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/send-email`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    type: 'registration',
-                    data: {
-                        email: contactDetails.contactEmail,
-                        name: contactDetails.contactName
-                    }
-                }),
-            });
-
-            if (!response.ok) {
-                console.error('Failed to send welcome email');
-            }
-        } catch (emailError) {
-            console.error('Email sending error:', emailError);
-            // Continue with registration even if email fails
-        }
-
-        // Return success response with user data (excluding password)
+        // Return success response
         return NextResponse.json(
             {
-                message: 'User registered successfully',
-                user: newUser
+                message: "User registered successfully",
+                user: {
+                    id: newUser.id,
+                    name: newUser.name,
+                    email: newUser.email,
+                    role: newUser.role,
+                },
             },
             { status: 201 }
         );
     } catch (error) {
-        console.error('Registration error:', error);
+        console.error("Registration error:", error);
         return NextResponse.json(
-            { error: 'Failed to register user' },
+            { message: "Something went wrong while registering the user" },
             { status: 500 }
         );
     }

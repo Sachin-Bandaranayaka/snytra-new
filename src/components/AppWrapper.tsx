@@ -17,6 +17,19 @@ function SessionRefresh() {
             update();
             setIsInitialized(true);
         }
+
+        // Add a listener for visibility changes to keep session in sync
+        const handleVisibilityChange = () => {
+            if (!document.hidden) {
+                console.log("Refreshing session on visibility change");
+                update();
+            }
+        };
+
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+        return () => {
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+        };
     }, [status, isInitialized, update]);
 
     return null;

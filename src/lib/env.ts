@@ -14,10 +14,11 @@ const envSchema = z.object({
     // Database
     DATABASE_URL: z.string().min(1, 'Database URL is required'),
 
-    // Authentication (Stack Auth)
-    NEXT_PUBLIC_STACK_PROJECT_ID: z.string().min(1, 'Stack Auth project ID is required'),
-    NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY: z.string().min(1, 'Stack Auth publishable key is required'),
-    STACK_SECRET_SERVER_KEY: z.string().min(1, 'Stack Auth secret key is required'),
+    // Authentication (NextAuth)
+    NEXTAUTH_URL: z.string().url('NextAuth URL must be a valid URL'),
+    NEXTAUTH_SECRET: z.string().min(1, 'NextAuth secret is required'),
+    GOOGLE_CLIENT_ID: z.string().optional(),
+    GOOGLE_CLIENT_SECRET: z.string().optional(),
 
     // Stripe (Payment processing)
     STRIPE_SECRET_KEY: z.string().min(1, 'Stripe secret key is required'),
@@ -42,89 +43,63 @@ const envSchema = z.object({
     ENABLE_EXPERIMENTAL_FEATURES: z.enum(['true', 'false']).optional().default('false'),
 });
 
-// Process environment object with defaults for optional values
-const _env = {
-    NODE_ENV: process.env.NODE_ENV,
-    DATABASE_URL: process.env.DATABASE_URL,
-    NEXT_PUBLIC_STACK_PROJECT_ID: process.env.NEXT_PUBLIC_STACK_PROJECT_ID,
-    NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY: process.env.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY,
-    STACK_SECRET_SERVER_KEY: process.env.STACK_SECRET_SERVER_KEY,
-    STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
-    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
-    STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
-    RESEND_API_KEY: process.env.RESEND_API_KEY,
-    EMAIL_FROM_ADDRESS: process.env.EMAIL_FROM_ADDRESS,
-    UPLOADTHING_SECRET: process.env.UPLOADTHING_SECRET,
-    UPLOADTHING_APP_ID: process.env.UPLOADTHING_APP_ID,
-    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
-    NEXT_PUBLIC_ANALYTICS_ID: process.env.NEXT_PUBLIC_ANALYTICS_ID,
-    ENABLE_EXPERIMENTAL_FEATURES: process.env.ENABLE_EXPERIMENTAL_FEATURES,
-};
+// Process environment variables
+function processEnv() {
+    // Use environment variables
+    const _env = {
+        NODE_ENV: process.env.NODE_ENV,
+        DATABASE_URL: process.env.DATABASE_URL,
 
-// Validate environment variables
-function validateEnv() {
-    const result = envSchema.safeParse(_env);
+        // Authentication
+        NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+        NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
+        GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+        GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
 
-    if (!result.success) {
-        console.error('❌ Invalid environment variables:');
-        const errors = result.error.flatten().fieldErrors;
+        // Stripe
+        STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+        STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
 
-        // Log each validation error
-        Object.entries(errors).forEach(([key, value]) => {
-            console.error(`- ${key}: ${value?.join(', ')}`);
-        });
+        // Email (Resend)
+        RESEND_API_KEY: process.env.RESEND_API_KEY,
+        EMAIL_FROM_ADDRESS: process.env.EMAIL_FROM_ADDRESS,
 
-        // In production, we want to fail fast if environment is not configured correctly
-        if (process.env.NODE_ENV === 'production') {
-            throw new Error('Invalid environment variables, check server logs for details');
-        } else {
-            // In development, just log a warning
-            console.warn('⚠️ Fix environment variables before deploying to production!');
+        // Uploadthing
+        UPLOADTHING_SECRET: process.env.UPLOADTHING_SECRET,
+        UPLOADTHING_APP_ID: process.env.UPLOADTHING_APP_ID,
+
+        // URLs
+        NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+
+        // Analytics
+        NEXT_PUBLIC_ANALYTICS_ID: process.env.NEXT_PUBLIC_ANALYTICS_ID,
+
+        // Feature flags
+        ENABLE_EXPERIMENTAL_FEATURES: process.env.ENABLE_EXPERIMENTAL_FEATURES,
+    };
+
+    try {
+        return envSchema.parse(_env);
+    } catch (error: any) {
+        if (error.errors) {
+            const missingVars = error.errors
+                .map((err: any) => `${err.path.join('.')}: ${err.message}`)
+                .join('\n');
+
+            logger.error(`Environment validation error: \n${missingVars}`);
+
+            if (process.env.NODE_ENV === 'development') {
+                console.error('\n❌ Invalid environment variables:', error.format());
+            }
         }
 
-        return false;
-    }
-
-    return true;
-}
-
-// Exported validated environment
-const isValid = validateEnv();
-
-// Public environment variables (safe to use on the client)
-export const publicEnv = {
-    NEXT_PUBLIC_APP_URL: _env.NEXT_PUBLIC_APP_URL,
-    NEXT_PUBLIC_STACK_PROJECT_ID: _env.NEXT_PUBLIC_STACK_PROJECT_ID,
-    NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY: _env.NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY,
-    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: _env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
-    NEXT_PUBLIC_ANALYTICS_ID: _env.NEXT_PUBLIC_ANALYTICS_ID,
-    ENABLE_EXPERIMENTAL_FEATURES: _env.ENABLE_EXPERIMENTAL_FEATURES === 'true',
-    NODE_ENV: _env.NODE_ENV,
-    IS_PRODUCTION: _env.NODE_ENV === 'production',
-    IS_DEVELOPMENT: _env.NODE_ENV === 'development',
-    IS_TEST: _env.NODE_ENV === 'test',
-};
-
-// Server environment variables (only use on the server)
-export const serverEnv = {
-    ...publicEnv,
-    DATABASE_URL: _env.DATABASE_URL,
-    STACK_SECRET_SERVER_KEY: _env.STACK_SECRET_SERVER_KEY,
-    STRIPE_SECRET_KEY: _env.STRIPE_SECRET_KEY,
-    STRIPE_WEBHOOK_SECRET: _env.STRIPE_WEBHOOK_SECRET,
-    RESEND_API_KEY: _env.RESEND_API_KEY,
-    EMAIL_FROM_ADDRESS: _env.EMAIL_FROM_ADDRESS,
-    UPLOADTHING_SECRET: _env.UPLOADTHING_SECRET,
-    UPLOADTHING_APP_ID: _env.UPLOADTHING_APP_ID,
-};
-
-// Log environment status on server startup
-if (typeof window === 'undefined') {
-    if (isValid) {
-        logger.info(`Environment validated successfully (${_env.NODE_ENV})`);
-    } else {
-        logger.warn(`Environment validation failed (${_env.NODE_ENV})`);
+        throw new Error('Invalid environment variables');
     }
 }
 
-export default { publicEnv, serverEnv }; 
+// Parse and validated environment
+const env = processEnv();
+
+// Export validated environment
+export default env; 

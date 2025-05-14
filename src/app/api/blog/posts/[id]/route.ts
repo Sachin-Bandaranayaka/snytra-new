@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import db, { getConnectionPool } from '@/lib/db';
 import { isAdmin } from '@/lib/auth';
 
 interface RouteParams {
@@ -27,9 +27,9 @@ export async function GET(
         `;
 
         const id = await params.id;
-        const result = await pool.query(query, [id]);
+        const result = await db.executeQuery(query, [id]);
 
-        if (result.rows.length === 0) {
+        if (!result || result.length === 0) {
             return NextResponse.json(
                 { error: 'Blog post not found', success: false },
                 { status: 404 }
@@ -37,7 +37,7 @@ export async function GET(
         }
 
         return NextResponse.json({
-            post: result.rows[0],
+            post: result[0],
             success: true
         });
     } catch (error) {
@@ -68,6 +68,7 @@ export async function PATCH(
         const data = await request.json();
 
         // Start a transaction
+        const pool = getConnectionPool();
         const client = await pool.connect();
 
         try {
@@ -181,6 +182,7 @@ export async function DELETE(
         const id = await params.id;
 
         // Start a transaction
+        const pool = getConnectionPool();
         const client = await pool.connect();
 
         try {
