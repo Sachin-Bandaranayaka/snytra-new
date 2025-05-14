@@ -5,6 +5,13 @@ import { signIn, useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
+// Helper function to force session refresh
+function triggerSessionRefresh() {
+    // Create and dispatch a visibility change event to force session refresh
+    const event = new Event('visibilitychange');
+    document.dispatchEvent(event);
+}
+
 export default function Login() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -32,7 +39,14 @@ export default function Login() {
             if (!result?.error) {
                 // Refresh session after successful login
                 await update();
-                router.push(callbackUrl);
+
+                // Force session refresh across components
+                triggerSessionRefresh();
+
+                // Add a small delay to ensure session update is processed
+                setTimeout(() => {
+                    router.push(callbackUrl);
+                }, 100);
             } else {
                 setLoginError("Invalid email or password");
             }

@@ -15,11 +15,23 @@ export default function MarketingHeader() {
 
     // Log authentication status changes
     useEffect(() => {
+        console.log("Auth status:", status);
+        console.log("Session:", session);
+        console.log("isAuthenticated:", isAuthenticated);
+
         if (status === "authenticated") {
             console.log("User authenticated:", session?.user);
             toast.success("Logged in successfully");
         } else if (status === "unauthenticated") {
             console.log("User not authenticated");
+        }
+    }, [status, session, isAuthenticated]);
+
+    // Force refresh when session changes
+    useEffect(() => {
+        if (status === "authenticated") {
+            // Re-render component when session is authenticated
+            console.log("Setting authenticated state in header");
         }
     }, [status, session]);
 
@@ -73,8 +85,15 @@ export default function MarketingHeader() {
 
     const handleLogout = async () => {
         await signOut({ redirect: false });
+        refreshSession();
         router.push('/login');
         setUserDropdownOpen(false);
+    };
+
+    // Function to manually refresh session
+    const refreshSession = () => {
+        const event = new Event('visibilitychange');
+        document.dispatchEvent(event);
     };
 
     return (

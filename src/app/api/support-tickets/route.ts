@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { getConnectionPool, executeQuery } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
     try {
@@ -43,10 +43,11 @@ export async function GET(request: NextRequest) {
             queryParams.push(parseInt(limitParam, 10));
         }
 
-        const result = await pool.query(query, queryParams);
+        // Use executeQuery instead of direct pool.query
+        const tickets = await executeQuery(query, queryParams);
 
         return NextResponse.json({
-            tickets: result.rows,
+            tickets,
             success: true
         });
     } catch (error) {
@@ -88,8 +89,8 @@ export async function POST(request: NextRequest) {
         }
 
         // First check if the user exists
-        const userCheck = await pool.query('SELECT id FROM users WHERE id = $1', [userId]);
-        if (userCheck.rows.length === 0) {
+        const userCheck = await executeQuery('SELECT id FROM users WHERE id = $1', [userId]);
+        if (userCheck.length === 0) {
             return NextResponse.json(
                 { error: 'User does not exist. Please log out and log in again.', success: false },
                 { status: 400 }
@@ -104,7 +105,7 @@ export async function POST(request: NextRequest) {
             RETURNING *
         `;
 
-        const result = await pool.query(query, [
+        const result = await executeQuery(query, [
             userId,
             title,
             description,
@@ -114,7 +115,7 @@ export async function POST(request: NextRequest) {
         ]);
 
         return NextResponse.json({
-            ticket: result.rows[0],
+            ticket: result[0],
             success: true
         });
     } catch (error: any) {

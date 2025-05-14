@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getConnectionPool, executeQuery } from '@/lib/db';
+import db, { getConnectionPool } from '@/lib/db';
 import { isAdmin } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
