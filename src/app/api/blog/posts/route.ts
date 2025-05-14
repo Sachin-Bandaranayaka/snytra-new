@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { getConnectionPool, executeQuery } from '@/lib/db';
 import { isAdmin } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
@@ -11,6 +11,8 @@ export async function GET(request: NextRequest) {
         const categoryParam = searchParams.get('category');
         const slugParam = searchParams.get('slug');
         const adminParam = searchParams.get('admin');
+
+        const pool = getConnectionPool();
 
         // Check if we're requesting a single post by slug
         if (slugParam) {
@@ -187,6 +189,7 @@ export async function POST(request: NextRequest) {
         const slug = providedSlug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
         // Start a transaction
+        const pool = getConnectionPool();
         const client = await pool.connect();
 
         try {

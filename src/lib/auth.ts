@@ -3,6 +3,12 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { sql } from "@/db/postgres"; // Direct SQL connection
+import crypto from 'crypto';
+
+// Generate a stable secret for development
+function generateStableSecret(seed = 'nextauth-secret-seed') {
+    return crypto.createHash('sha256').update(seed).digest('hex');
+}
 
 // Define authOptions directly to avoid circular dependencies
 export const authOptions: NextAuthOptions = {
@@ -91,6 +97,21 @@ export const authOptions: NextAuthOptions = {
     },
     session: {
         strategy: "jwt",
+        maxAge: 30 * 24 * 60 * 60, // 30 days
+    },
+    jwt: {
+        maxAge: 30 * 24 * 60 * 60, // 30 days
+    },
+    cookies: {
+        sessionToken: {
+            name: `next-auth.session-token`,
+            options: {
+                httpOnly: true,
+                sameSite: "lax",
+                path: "/",
+                secure: process.env.NODE_ENV === "production"
+            }
+        }
     },
     callbacks: {
         async session({ session, token }) {
@@ -108,7 +129,7 @@ export const authOptions: NextAuthOptions = {
             return token;
         },
     },
-    secret: process.env.NEXTAUTH_SECRET,
+    secret: process.env.NEXTAUTH_SECRET || generateStableSecret(),
     debug: process.env.NODE_ENV === "development",
 };
 
