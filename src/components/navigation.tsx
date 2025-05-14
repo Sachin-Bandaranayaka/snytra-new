@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import CartDisplay from "@/components/ui/CartDisplay";
 import Image from "next/image";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { signOut } from "next-auth/react";
 
 // Define interface for global Stack Auth
 declare global {
@@ -46,8 +47,9 @@ export default function Navigation() {
     }, []);
 
     const handleLogout = async () => {
-        // Stack Auth provides a signOut function that can be used here
-        router.push('/handler/signout');
+        // Update to use NextAuth's signOut function
+        await signOut({ redirect: false });
+        router.push('/login');
         setUserDropdownOpen(false);
     };
 
