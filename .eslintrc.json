@@ -1,0 +1,18 @@
+{
+    "extends": "next/core-web-vitals",
+    "ignorePatterns": [
+        "src/generated/**/*",
+        "src/scripts/**/*",
+        "node_modules/**/*",
+        ".next/**/*"
+    ],
+    "rules": {
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-unused-vars": "off",
+        "@typescript-eslint/no-this-alias": "off",
+        "@typescript-eslint/no-unused-expressions": "off",
+        "@typescript-eslint/no-require-imports": "off",
+        "react/no-unescaped-entities": "off",
+        "@typescript-eslint/no-empty-interface": "off"
+    }
+}

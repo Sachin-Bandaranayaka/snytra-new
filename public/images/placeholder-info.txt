@@ -1,0 +1,15 @@
+Placeholder Images Information
+
+The following placeholder image files should be placed in this directory:
+1. margherita-pizza.jpg - Image of a margherita pizza
+2. caesar-salad.jpg - Image of a caesar salad
+3. macaroni.jpg - Image of a pasta dish
+4. cheesecake.jpg - Image of a New York cheesecake
+5. placeholder-food-1.jpg - Generic food placeholder
+6. placeholder-food-2.jpg - Generic food placeholder
+7. placeholder-food-3.jpg - Generic food placeholder
+8. placeholder-food-4.jpg - Generic food placeholder
+
+These images are used in the dashboard menu display. Replace with actual restaurant food images when available.
+
+Image size recommendation: 500x400px, JPEG format. 

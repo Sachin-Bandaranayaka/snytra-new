@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Existing User model from database
+model User {
+  id                        Int       @id @default(autoincrement())
+  name                      String?
+  email                     String    @unique
+  password_hash             String?
+  role                      String    @default("user")
+  subscription_plan         String?
+  subscription_status       String?
+  created_at                DateTime  @default(now())
+  updated_at                DateTime  @updatedAt
+  stripe_customer_id        String?
+  stripe_subscription_id    String?
+  subscription_current_period_start DateTime?
+  subscription_current_period_end   DateTime?
+  profile_image             String?
+  username                  String?
+  phone                     String?
+  reset_token               String?
+  reset_token_expires       DateTime?
+  remember_token            String?
+
+  @@map("users")
+}
+
+// Existing models
+model StaffMember {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("staffmember")
+}
+
+model Job {
+  id             String   @id @default(uuid())
+  title          String
+  department     String
+  location       String
+  type           String   // e.g., Full-time, Part-time, Contract
+  description    String
+  responsibilities String
+  requirements   String
+  benefits       String?
+  salary         String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("jobs")
+}
+
+model SlideShow {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  imageUrl    String
+  iconType    String
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("slideshow")
+}

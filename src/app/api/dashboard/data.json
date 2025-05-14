@@ -1,0 +1,240 @@
+{
+    "success": true,
+    "restaurants": [
+        {
+            "id": 1,
+            "name": "Bistro Italiano",
+            "description": "Authentic Italian cuisine in a cozy atmosphere",
+            "address": "123 Main St, New York, NY 10001"
+        },
+        {
+            "id": 2,
+            "name": "Sushi Express",
+            "description": "Fresh and fast Japanese cuisine",
+            "address": "456 Broadway, New York, NY 10002"
+        }
+    ],
+    "recentOrders": [
+        {
+            "id": 1001,
+            "customer_name": "John Doe",
+            "status": "completed",
+            "total_amount": "45.90",
+            "created_at": "2023-10-15T14:30:45",
+            "table": "Table 5",
+            "items": [
+                {
+                    "name": "Burger",
+                    "quantity": 1,
+                    "price": "8.99"
+                },
+                {
+                    "name": "Fish and Chips",
+                    "quantity": 3,
+                    "price": "28.99"
+                },
+                {
+                    "name": "French Fries",
+                    "quantity": 2,
+                    "price": "5.99"
+                }
+            ]
+        },
+        {
+            "id": 1002,
+            "customer_name": "Jane Smith",
+            "status": "pending",
+            "total_amount": "32.50",
+            "created_at": "2023-10-15T15:10:20",
+            "table": "Table 3",
+            "items": [
+                {
+                    "name": "Margherita Pizza",
+                    "quantity": 1,
+                    "price": "12.99"
+                },
+                {
+                    "name": "Caesar Salad",
+                    "quantity": 1,
+                    "price": "8.99"
+                },
+                {
+                    "name": "Tiramisu",
+                    "quantity": 1,
+                    "price": "6.99"
+                }
+            ]
+        },
+        {
+            "id": 1003,
+            "customer_name": "Robert Johnson",
+            "status": "in-progress",
+            "total_amount": "57.80",
+            "created_at": "2023-10-15T15:30:10",
+            "table": "Table 8",
+            "items": [
+                {
+                    "name": "Ribeye Steak",
+                    "quantity": 1,
+                    "price": "29.99"
+                },
+                {
+                    "name": "Lobster Bisque",
+                    "quantity": 1,
+                    "price": "12.99"
+                },
+                {
+                    "name": "Mashed Potatoes",
+                    "quantity": 1,
+                    "price": "4.99"
+                },
+                {
+                    "name": "Cheesecake",
+                    "quantity": 1,
+                    "price": "6.99"
+                }
+            ]
+        },
+        {
+            "id": 1004,
+            "customer_name": "Alice Williams",
+            "status": "cancelled",
+            "total_amount": "22.98",
+            "created_at": "2023-10-15T15:45:30",
+            "table": "Table 2",
+            "items": [
+                {
+                    "name": "Pasta Carbonara",
+                    "quantity": 1,
+                    "price": "15.99"
+                },
+                {
+                    "name": "Garlic Bread",
+                    "quantity": 1,
+                    "price": "3.99"
+                },
+                {
+                    "name": "Soft Drink",
+                    "quantity": 1,
+                    "price": "2.99"
+                }
+            ]
+        }
+    ],
+    "menuItems": [
+        {
+            "id": 1,
+            "name": "Margherita Pizza",
+            "description": "Classic tomato sauce, mozzarella cheese, and fresh basil.",
+            "price": "12.99 - 18.99",
+            "category": "Pizza",
+            "image_url": "/images/margherita-pizza.jpg",
+            "is_best_seller": true,
+            "options": [
+                "S/M/L"
+            ]
+        },
+        {
+            "id": 2,
+            "name": "Caesar Salad",
+            "description": "Crisp romaine lettuce, croutons, and Caesar dressing.",
+            "price": "8.99",
+            "category": "Salad",
+            "image_url": "/images/caesar-salad.jpg"
+        },
+        {
+            "id": 3,
+            "name": "Macaroni",
+            "description": "Creamy sauce with pancetta, eggs, and Parmesan cheese.",
+            "price": "15.99",
+            "category": "Pasta",
+            "image_url": "/images/macaroni.jpg",
+            "is_best_seller": true
+        },
+        {
+            "id": 4,
+            "name": "New York Cheesecake",
+            "description": "Rich and creamy cheesecake with a graham cracker crust.",
+            "price": "6.99",
+            "category": "Dessert",
+            "image_url": "/images/cheesecake.jpg"
+        },
+        {
+            "id": 5,
+            "name": "Pepperoni Pizza",
+            "description": "Classic tomato sauce, mozzarella cheese, and pepperoni slices.",
+            "price": "13.99 - 19.99",
+            "category": "Pizza",
+            "image_url": "/images/placeholder-food-1.jpg",
+            "is_best_seller": true,
+            "options": [
+                "S/M/L"
+            ]
+        },
+        {
+            "id": 6,
+            "name": "Greek Salad",
+            "description": "Fresh cucumbers, tomatoes, olives, feta cheese, and Greek dressing.",
+            "price": "9.99",
+            "category": "Salad",
+            "image_url": "/images/placeholder-food-2.jpg"
+        },
+        {
+            "id": 7,
+            "name": "Spaghetti Bolognese",
+            "description": "Traditional pasta with rich meat sauce and Parmesan cheese.",
+            "price": "14.99",
+            "category": "Pasta",
+            "image_url": "/images/placeholder-food-3.jpg"
+        },
+        {
+            "id": 8,
+            "name": "Chocolate Lava Cake",
+            "description": "Warm chocolate cake with a molten center, served with vanilla ice cream.",
+            "price": "7.99",
+            "category": "Dessert",
+            "image_url": "/images/placeholder-food-4.jpg",
+            "is_best_seller": true
+        }
+    ],
+    "stats": {
+        "totalOrders": 239,
+        "totalRevenue": 5890.5,
+        "totalCustomers": 98,
+        "pendingOrders": 12,
+        "ordersThisWeek": 32,
+        "previousWeekOrders": 28,
+        "revenueThisWeek": 1290.75,
+        "previousWeekRevenue": 1100.25,
+        "averageOrderValue": 40.62,
+        "completedOrders": 110,
+        "cancelledOrders": 110,
+        "inProgressOrders": 7,
+        "lastSixMonthsSales": [
+            {
+                "month": "Nov",
+                "sales": 3200
+            },
+            {
+                "month": "Dec",
+                "sales": 4100
+            },
+            {
+                "month": "Jan",
+                "sales": 3800
+            },
+            {
+                "month": "Feb",
+                "sales": 3600
+            },
+            {
+                "month": "Mar",
+                "sales": 4800
+            },
+            {
+                "month": "Apr",
+                "sales": 5100
+            }
+        ]
+    }
+}
