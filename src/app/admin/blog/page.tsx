@@ -234,7 +234,10 @@ export default function BlogPostsManagement() {
 
             {isLoading ? (
                 <div className="flex items-center justify-center min-h-[300px]">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
+                    <div
+                        data-testid="loading-spinner"
+                        className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"
+                    ></div>
                 </div>
             ) : filteredPosts.length === 0 ? (
                 <div className="bg-white p-6 rounded-lg shadow text-center">
