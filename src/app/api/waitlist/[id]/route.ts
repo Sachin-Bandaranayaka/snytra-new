@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
@@ -30,13 +30,13 @@ export async function GET(
         }
 
         // Execute query
-        const result = await pool.query(query, queryParams);
+        const result = await executeQuery<any[]>(query, queryParams);
 
-        if (result.rows.length === 0) {
+        if (result.length === 0) {
             return NextResponse.json({ error: 'Waitlist entry not found' }, { status: 404 });
         }
 
-        const entry = result.rows[0];
+        const entry = result[0];
 
         // Format response
         const waitlistEntry = {
@@ -107,21 +107,21 @@ export async function PUT(
             checkParams.push(phone);
         }
 
-        const checkResult = await pool.query(checkQuery, checkParams);
+        const checkResult = await executeQuery<any[]>(checkQuery, checkParams);
 
-        if (checkResult.rows.length === 0) {
+        if (checkResult.length === 0) {
             return NextResponse.json(
                 { error: 'Waitlist entry not found or unauthorized' },
                 { status: 404 }
             );
         }
 
-        const currentEntry = checkResult.rows[0];
+        const currentEntry = checkResult[0];
 
         // If customer, limit what can be updated
         if (!isStaff) {
             // Customers can only update basic info, not status or times
-            const limitedUpdate = await pool.query(
+            const limitedUpdate = await executeQuery<any[]>(
                 `UPDATE waitlist 
                  SET name = $1,
                      customer_email = $2,
@@ -139,14 +139,14 @@ export async function PUT(
                 ]
             );
 
-            if (limitedUpdate.rows.length === 0) {
+            if (limitedUpdate.length === 0) {
                 return NextResponse.json(
                     { error: 'Failed to update waitlist entry' },
                     { status: 400 }
                 );
             }
 
-            const updatedEntry = limitedUpdate.rows[0];
+            const updatedEntry = limitedUpdate[0];
 
             return NextResponse.json({
                 message: 'Waitlist entry updated successfully',
@@ -224,12 +224,12 @@ export async function PUT(
                 await pool.query('COMMIT');
 
                 // Retrieve updated entry
-                const getUpdatedResult = await pool.query(
+                const getUpdatedResult = await executeQuery<any[]>(
                     `SELECT * FROM waitlist WHERE id = $1`,
                     [waitlistId]
                 );
 
-                const updatedEntry = getUpdatedResult.rows[0];
+                const updatedEntry = getUpdatedResult[0];
 
                 return NextResponse.json({
                     message: 'Waitlist entry updated and converted to reservation',
@@ -255,7 +255,7 @@ export async function PUT(
             }
         } else {
             // Regular update (not changing to seated)
-            const updateResult = await pool.query(
+            const updateResult = await executeQuery<any[]>(
                 `UPDATE waitlist 
                  SET name = $1,
                      customer_email = $2,
@@ -284,14 +284,14 @@ export async function PUT(
                 ]
             );
 
-            if (updateResult.rows.length === 0) {
+            if (updateResult.length === 0) {
                 return NextResponse.json(
                     { error: 'Failed to update waitlist entry' },
                     { status: 400 }
                 );
             }
 
-            const updatedEntry = updateResult.rows[0];
+            const updatedEntry = updateResult[0];
 
             return NextResponse.json({
                 message: 'Waitlist entry updated successfully',
@@ -348,9 +348,9 @@ export async function DELETE(
         }
 
         // Check if entry exists and user is authorized
-        const checkResult = await pool.query(checkQuery, checkParams);
+        const checkResult = await executeQuery<any[]>(checkQuery, checkParams);
 
-        if (checkResult.rows.length === 0) {
+        if (checkResult.length === 0) {
             return NextResponse.json(
                 { error: 'Waitlist entry not found or unauthorized' },
                 { status: 404 }

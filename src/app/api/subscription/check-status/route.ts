@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
     const url = new URL(request.url);
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
     try {
         // Check the subscription status in the database
-        const { rows: eventRows } = await pool.query(
+        const eventRows = await executeQuery<any[]>(
             `SELECT status, stripe_subscription_id
              FROM subscription_events
              WHERE user_id = $1 AND session_id = $2
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
 
             // If status is completed, get the user's subscription details
             if (status === 'completed') {
-                const { rows: userRows } = await pool.query(
+                const userRows = await executeQuery<any[]>(
                     `SELECT subscription_plan, subscription_status
                      FROM users
                      WHERE id = $1`,
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
             }
         } else {
             // If we don't find event by session ID, check if the user has an active subscription
-            const { rows: userRows } = await pool.query(
+            const userRows = await executeQuery<any[]>(
                 `SELECT subscription_plan, subscription_status
                  FROM users
                  WHERE id = $1 AND subscription_status = 'active'`,

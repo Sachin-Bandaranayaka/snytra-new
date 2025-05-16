@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 // Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Fetch plan details including Stripe price ID from the database
-        const { rows } = await pool.query(
+        const rows = await executeQuery<any[]>(
             `SELECT 
                 id, name, description, price, billing_interval, 
                 stripe_product_id, stripe_price_id, has_trial, trial_days
@@ -50,14 +50,14 @@ export async function POST(request: NextRequest) {
 
         try {
             // Check if this user already has a Stripe customer
-            const customerResult = await pool.query(
+            const customerResult = await executeQuery<any[]>(
                 `SELECT stripe_customer_id FROM users WHERE id = $1`,
                 [customerId]
             );
 
-            if (customerResult.rows.length > 0 && customerResult.rows[0].stripe_customer_id) {
+            if (customerResult.length > 0 && customerResult[0].stripe_customer_id) {
                 // User already has a Stripe customer ID
-                stripeCustomerId = customerResult.rows[0].stripe_customer_id;
+                stripeCustomerId = customerResult[0].stripe_customer_id;
 
                 // Verify the customer exists in Stripe
                 try {
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Record subscription intent in database
-        const eventResult = await pool.query(
+        const eventResult = await executeQuery<any[]>(
             `INSERT INTO subscription_events (
                 user_id, 
                 event_type, 
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
             ]
         );
 
-        const subscriptionEventId = eventResult.rows[0].id;
+        const subscriptionEventId = eventResult[0].id;
 
         // Create checkout options
         const checkoutOptions: Stripe.Checkout.SessionCreateParams = {

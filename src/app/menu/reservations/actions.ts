@@ -1,6 +1,6 @@
 'use server';
 
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 
 export async function createReservation(formData: FormData) {
@@ -22,7 +22,7 @@ export async function createReservation(formData: FormData) {
         }
 
         // Find available tables that can accommodate the party size
-        const availableTablesResult = await pool.query(
+        const availableTablesResult = await executeQuery<any[]>(
             `SELECT id, table_number, seats 
        FROM tables 
        WHERE seats >= $1 
@@ -39,14 +39,14 @@ export async function createReservation(formData: FormData) {
         let tableId = null;
         let status = 'waitlist'; // Default to waitlist
 
-        if (availableTablesResult.rowCount > 0) {
+        if (availableTablesResult.length > 0) {
             // Found an available table
-            tableId = availableTablesResult.rows[0].id;
+            tableId = availableTablesResult[0].id;
             status = 'confirmed';
         }
 
         // Insert reservation
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `INSERT INTO reservations 
        (name, email, phone_number, date, time, party_size, table_id, status, special_instructions) 
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
@@ -64,7 +64,7 @@ export async function createReservation(formData: FormData) {
             ]
         );
 
-        const reservation = result.rows[0];
+        const reservation = result[0];
 
         // Revalidate both paths
         revalidatePath('/menu/reservations');
@@ -106,16 +106,16 @@ export async function addToWaitlist(formData: FormData) {
         console.log('Attempting to insert into waitlist table:', { name, phoneNumber, partySize });
 
         // Insert into waitlist
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `INSERT INTO waitlist (name, phone_number, party_size) 
        VALUES ($1, $2, $3) 
        RETURNING *`,
             [name, phoneNumber, partySize]
         );
 
-        console.log('Insert successful, waitlist entry created:', result.rows[0]);
+        console.log('Insert successful, waitlist entry created:', result[0]);
 
-        const waitlistEntry = result.rows[0];
+        const waitlistEntry = result[0];
 
         // Revalidate both paths
         revalidatePath('/menu/reservations');
@@ -174,11 +174,11 @@ export async function getUpcomingReservations(email?: string, phone?: string) {
             return { success: false, reservations: [] };
         }
 
-        const result = await pool.query(query, params);
+        const result = await executeQuery<any[]>(query, params);
 
         return {
             success: true,
-            reservations: result.rows
+            reservations: result
         };
     } catch (error) {
         console.error('Error fetching reservations:', error);

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
     try {
@@ -13,12 +13,12 @@ export async function POST(request: NextRequest) {
         }
 
         // Validate table exists
-        const tableResult = await pool.query(
+        const tableResult = await executeQuery<any[]>(
             `SELECT * FROM tables WHERE id = $1`,
             [tableId]
         );
 
-        if (tableResult.rows.length === 0) {
+        if (tableResult.length === 0) {
             return NextResponse.json(
                 { error: 'Table not found' },
                 { status: 404 }
@@ -26,14 +26,14 @@ export async function POST(request: NextRequest) {
         }
 
         // Create service request
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `INSERT INTO service_requests (table_id, request_type, status, notes)
        VALUES ($1, $2, 'pending', $3)
        RETURNING id`,
             [tableId, requestType, notes || null]
         );
 
-        const requestId = result.rows[0].id;
+        const requestId = result[0].id;
 
         // TODO: In a real implementation, send a notification to staff
         // For now, we're just creating the database record
@@ -59,19 +59,19 @@ export async function GET(request: NextRequest) {
 
         if (requestId) {
             // Get specific service request
-            const result = await pool.query(
+            const result = await executeQuery<any[]>(
                 `SELECT * FROM service_requests WHERE id = $1`,
                 [requestId]
             );
 
-            if (result.rows.length === 0) {
+            if (result.length === 0) {
                 return NextResponse.json(
                     { error: 'Service request not found' },
                     { status: 404 }
                 );
             }
 
-            const request = result.rows[0];
+            const request = result[0];
 
             return NextResponse.json({
                 request: {
@@ -95,10 +95,10 @@ export async function GET(request: NextRequest) {
                 params = [tableId];
             }
 
-            const result = await pool.query(query, params);
+            const result = await executeQuery<any[]>(query, params);
 
             return NextResponse.json({
-                requests: result.rows.map(request => ({
+                requests: result.map(request => ({
                     id: request.id,
                     tableId: request.table_id,
                     requestType: request.request_type,

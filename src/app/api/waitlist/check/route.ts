@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
     try {
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
         }
 
         // Find waitlist entries by phone number
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `SELECT * FROM waitlist 
        WHERE phone_number = $1 
        AND status = 'waiting'
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
             [phone]
         );
 
-        if (result.rowCount === 0) {
+        if (result.length === 0) {
             return NextResponse.json(
                 { message: 'No active waitlist entries found for this phone number' },
                 { status: 404 }
@@ -32,9 +32,9 @@ export async function GET(request: NextRequest) {
 
         // For each entry, get its position in the waitlist
         const entries = await Promise.all(
-            result.rows.map(async (entry) => {
+            result.map(async (entry) => {
                 // Count entries ahead in the queue for the same date and time
-                const positionResult = await pool.query(
+                const positionResult = await executeQuery<any[]>(
                     `SELECT COUNT(*) as position 
            FROM waitlist
            WHERE requested_date = $1 
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
                 );
 
                 // Add 1 to get actual position (since we start counting from 0)
-                const position = parseInt(positionResult.rows[0].position) + 1;
+                const position = parseInt(positionResult[0].position) + 1;
 
                 return {
                     id: entry.id,

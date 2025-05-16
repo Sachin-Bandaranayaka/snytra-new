@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import { sendEmail } from '@/lib/nodemailer';
 
 export async function POST(req: NextRequest) {
@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Get user details
-        const { rows: userRows } = await pool.query(
+        const userRows = await executeQuery<any[]>(
             'SELECT name, email FROM users WHERE id = $1',
             [userId]
         );

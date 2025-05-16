@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import { initSocketServer, sendStaffMessage } from '@/lib/socket-server';
 
 export async function GET(request: Request) {
@@ -62,11 +62,11 @@ export async function GET(request: Request) {
         query += ` ORDER BY sm.created_at DESC LIMIT $${paramIndex++}`;
         params.push(limit);
 
-        const result = await pool.query(query, params);
+        const result = await executeQuery<any[]>(query, params);
 
         return NextResponse.json({
             success: true,
-            messages: result.rows
+            messages: result
         });
     } catch (error: any) {
         console.error('Error fetching messages:', error);
@@ -95,12 +95,12 @@ export async function POST(request: Request) {
         }
 
         // Check if sender exists
-        const senderCheck = await pool.query(
+        const senderCheck = await executeQuery<any[]>(
             'SELECT id FROM staff WHERE id = $1',
             [sender_id]
         );
 
-        if (senderCheck.rowCount === 0) {
+        if (senderCheck.length === 0) {
             return NextResponse.json(
                 { success: false, error: 'Sender not found' },
                 { status: 400 }
@@ -108,12 +108,12 @@ export async function POST(request: Request) {
         }
 
         // Check if recipient exists
-        const recipientCheck = await pool.query(
+        const recipientCheck = await executeQuery<any[]>(
             'SELECT id FROM staff WHERE id = $1',
             [recipient_id]
         );
 
-        if (recipientCheck.rowCount === 0) {
+        if (recipientCheck.length === 0) {
             return NextResponse.json(
                 { success: false, error: 'Recipient not found' },
                 { status: 400 }
@@ -121,7 +121,7 @@ export async function POST(request: Request) {
         }
 
         // Create new message
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `INSERT INTO staff_messages 
         (sender_id, recipient_id, message, is_read)
        VALUES ($1, $2, $3, false)
@@ -129,7 +129,7 @@ export async function POST(request: Request) {
             [sender_id, recipient_id, message]
         );
 
-        const newMessage = result.rows[0];
+        const newMessage = result[0];
 
         // Send real-time notification
         try {
@@ -142,12 +142,12 @@ export async function POST(request: Request) {
 
             if (io) {
                 // Get staff names for the notification
-                const staffInfo = await pool.query(
+                const staffInfo = await executeQuery<any[]>(
                     `SELECT id, first_name, last_name FROM staff WHERE id IN ($1, $2)`,
                     [sender_id, recipient_id]
                 );
 
-                const staffMap = staffInfo.rows.reduce((map: any, staff: any) => {
+                const staffMap = staffInfo.reduce((map: any, staff: any) => {
                     map[staff.id] = `${staff.first_name} ${staff.last_name}`;
                     return map;
                 }, {});

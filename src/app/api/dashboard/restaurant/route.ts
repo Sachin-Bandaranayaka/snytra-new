@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 // Helper to get more consistent results by always fetching/updating the same restaurant
 async function getMainRestaurantId() {
     // Check if there are any restaurants
-    const countResult = await pool.query('SELECT COUNT(*) FROM restaurants');
-    const count = parseInt(countResult.rows[0].count);
+    const countResult = await executeQuery<any[]>('SELECT COUNT(*) FROM restaurants');
+    const count = parseInt(countResult[0].count);
 
     if (count === 0) {
         // No restaurants, create a default one
         console.log('No restaurants found, creating default one');
-        const insertResult = await pool.query(`
+        const insertResult = await executeQuery<any[]>(`
             INSERT INTO restaurants (
                 name, 
                 description, 
@@ -33,15 +33,15 @@ async function getMainRestaurantId() {
                 '#60a5fa'
             ) RETURNING id
         `);
-        return insertResult.rows[0].id;
+        return insertResult[0].id;
     } else if (count > 1) {
         // Multiple restaurants found, use the one with the lowest ID for consistency
-        const idResult = await pool.query('SELECT MIN(id) as id FROM restaurants');
-        return idResult.rows[0].id;
+        const idResult = await executeQuery<any[]>('SELECT MIN(id) as id FROM restaurants');
+        return idResult[0].id;
     } else {
         // Only one restaurant, just get its ID
-        const idResult = await pool.query('SELECT id FROM restaurants LIMIT 1');
-        return idResult.rows[0].id;
+        const idResult = await executeQuery<any[]>('SELECT id FROM restaurants LIMIT 1');
+        return idResult[0].id;
     }
 }
 
@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
         const restaurantId = await getMainRestaurantId();
 
         // Now fetch that specific restaurant by ID
-        const restaurantQuery = await pool.query(`
+        const restaurantQuery = await executeQuery<any[]>(`
             SELECT id, name, description, address, 
                 COALESCE(phone, '') as phone, 
                 COALESCE(email, '') as email, 
@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
         `, [restaurantId]);
 
         // This should never happen since we just created the restaurant if it didn't exist
-        if (restaurantQuery.rows.length === 0) {
+        if (restaurantQuery.length === 0) {
             return NextResponse.json(
                 { error: 'Restaurant not found', success: false },
                 { status: 404 }
@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
         }
 
         return NextResponse.json({
-            restaurant: restaurantQuery.rows[0],
+            restaurant: restaurantQuery[0],
             success: true
         });
     } catch (error: any) {
@@ -101,7 +101,7 @@ export async function PUT(req: NextRequest) {
         const restaurantId = id || await getMainRestaurantId();
 
         // Update restaurant
-        const updateQuery = await pool.query(`
+        const updateQuery = await executeQuery<any[]>(`
             UPDATE restaurants
             SET name = $1, 
                 description = $2, 
@@ -117,7 +117,7 @@ export async function PUT(req: NextRequest) {
             RETURNING *
         `, [name, description, address, phone, email, website, logo_url, primary_color, secondary_color, restaurantId]);
 
-        if (updateQuery.rows.length === 0) {
+        if (updateQuery.length === 0) {
             return NextResponse.json(
                 { error: 'Restaurant not found', success: false },
                 { status: 404 }
@@ -125,7 +125,7 @@ export async function PUT(req: NextRequest) {
         }
 
         return NextResponse.json({
-            restaurant: updateQuery.rows[0],
+            restaurant: updateQuery[0],
             success: true,
             message: 'Restaurant settings saved successfully!'
         });

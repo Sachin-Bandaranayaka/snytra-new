@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { sendReservationConfirmation } from '@/lib/nodemailer';
@@ -48,11 +48,11 @@ export async function GET(req: NextRequest) {
             `;
         }
 
-        const result = await pool.query(query, params);
+        const result = await executeQuery<any[]>(query, params);
 
         return NextResponse.json({
             success: true,
-            reservations: result.rows
+            reservations: result
         });
     } catch (error: any) {
         console.error('Error fetching reservations:', error);
@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
         let seats = null;
 
         if (!finalTableId) {
-            const availableTablesResult = await pool.query(
+            const availableTablesResult = await executeQuery<any[]>(
                 `SELECT id, table_number, seats, qr_code_url
                 FROM tables 
                 WHERE seats >= $1 
@@ -109,12 +109,12 @@ export async function POST(req: NextRequest) {
                 [partySize, date, time]
             );
 
-            if (availableTablesResult.rowCount > 0) {
+            if (availableTablesResult.length > 0) {
                 // Found an available table
-                finalTableId = availableTablesResult.rows[0].id;
-                qrCodeUrl = availableTablesResult.rows[0].qr_code_url;
-                tableNumber = availableTablesResult.rows[0].table_number;
-                seats = availableTablesResult.rows[0].seats;
+                finalTableId = availableTablesResult[0].id;
+                qrCodeUrl = availableTablesResult[0].qr_code_url;
+                tableNumber = availableTablesResult[0].table_number;
+                seats = availableTablesResult[0].seats;
                 status = 'confirmed';
 
                 // Update table status to reserved
@@ -129,15 +129,15 @@ export async function POST(req: NextRequest) {
             }
         } else {
             // If a specific table ID was provided, get its QR code
-            const tableResult = await pool.query(
+            const tableResult = await executeQuery<any[]>(
                 `SELECT qr_code_url, table_number, seats FROM tables WHERE id = $1`,
                 [finalTableId]
             );
 
-            if (tableResult.rowCount > 0) {
-                qrCodeUrl = tableResult.rows[0].qr_code_url;
-                tableNumber = tableResult.rows[0].table_number;
-                seats = tableResult.rows[0].seats;
+            if (tableResult.length > 0) {
+                qrCodeUrl = tableResult[0].qr_code_url;
+                tableNumber = tableResult[0].table_number;
+                seats = tableResult[0].seats;
 
                 // Update table status to reserved
                 await pool.query(
@@ -148,7 +148,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Insert reservation
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `INSERT INTO reservations 
             (name, email, phone_number, date, time, party_size, table_id, status, special_instructions) 
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
@@ -166,13 +166,13 @@ export async function POST(req: NextRequest) {
             ]
         );
 
-        const reservation = result.rows[0];
+        const reservation = result[0];
 
         // Get restaurant name
-        const restaurantResult = await pool.query(
+        const restaurantResult = await executeQuery<any[]>(
             `SELECT name FROM restaurants LIMIT 1`
         );
-        const restaurantName = restaurantResult.rowCount > 0 ? restaurantResult.rows[0].name : 'Snytra';
+        const restaurantName = restaurantResult.length > 0 ? restaurantResult[0].name : 'Snytra';
 
         // Send confirmation email if status is confirmed
         if (status === 'confirmed' && customerEmail) {
@@ -276,9 +276,9 @@ export async function PATCH(request: NextRequest) {
             RETURNING *
         `;
 
-        const result = await pool.query(query, params);
+        const result = await executeQuery<any[]>(query, params);
 
-        if (result.rowCount === 0) {
+        if (result.length === 0) {
             return NextResponse.json(
                 { error: 'Reservation not found' },
                 { status: 404 }
@@ -287,7 +287,7 @@ export async function PATCH(request: NextRequest) {
 
         return NextResponse.json({
             success: true,
-            reservation: result.rows[0],
+            reservation: result[0],
             message: 'Reservation updated successfully'
         });
     } catch (error) {
@@ -313,12 +313,12 @@ export async function DELETE(request: NextRequest) {
         }
 
         // Get reservation first to check if it exists
-        const checkResult = await pool.query(
+        const checkResult = await executeQuery<any[]>(
             'SELECT * FROM reservations WHERE id = $1',
             [id]
         );
 
-        if (checkResult.rowCount === 0) {
+        if (checkResult.length === 0) {
             return NextResponse.json(
                 { error: 'Reservation not found' },
                 { status: 404 }

@@ -1,18 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import bcrypt from 'bcrypt';
 
 export async function GET(req: NextRequest) {
     try {
         // Fetch staff members
-        const staffQuery = await pool.query(`
+        const staffQuery = await executeQuery<any[]>(`
       SELECT id, name, email, role, is_active, hiring_date, phone, profile_image
       FROM staff
       ORDER BY name ASC
     `);
 
         return NextResponse.json({
-            staff: staffQuery.rows,
+            staff: staffQuery,
             success: true
         });
     } catch (error: any) {
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
         const password_hash = await bcrypt.hash(password, saltRounds);
 
         // Insert staff member
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `INSERT INTO staff (name, email, role, is_active, hiring_date, phone, profile_image, password_hash)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
              RETURNING id, name, email, role, is_active, hiring_date, phone, profile_image`,
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
         );
 
         return NextResponse.json({
-            staff: result.rows[0],
+            staff: result[0],
             success: true
         });
     } catch (error: any) {

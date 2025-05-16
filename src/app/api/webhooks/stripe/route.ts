@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 // Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
@@ -87,12 +87,12 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
         const sessionId = session.id;
 
         // Find the subscription event in our database
-        const eventResult = await pool.query(
+        const eventResult = await executeQuery<any[]>(
             `SELECT * FROM subscription_events WHERE session_id = $1`,
             [sessionId]
         );
 
-        if (eventResult.rows.length === 0) {
+        if (eventResult.length === 0) {
             // If the event doesn't exist, check metadata for the user and plan
             if (!session.metadata?.user_id || !session.metadata?.plan_id) {
                 console.error('No subscription event found and no metadata in session', sessionId);
@@ -127,8 +127,8 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
         }
 
         // Get user and plan information
-        const userId = session.metadata?.user_id || eventResult.rows[0]?.user_id;
-        const planId = session.metadata?.plan_id || eventResult.rows[0]?.plan_id;
+        const userId = session.metadata?.user_id || eventResult[0]?.user_id;
+        const planId = session.metadata?.plan_id || eventResult[0]?.plan_id;
 
         if (!userId || !planId) {
             console.error('Missing user or plan ID in session or event');
@@ -201,17 +201,17 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
         const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
 
         // Get user from customer ID
-        const userResult = await pool.query(
+        const userResult = await executeQuery<any[]>(
             `SELECT * FROM users WHERE stripe_customer_id = $1`,
             [invoice.customer]
         );
 
-        if (userResult.rows.length === 0) {
+        if (userResult.length === 0) {
             console.error(`No user found for customer ${invoice.customer}`);
             return;
         }
 
-        const userId = userResult.rows[0].id;
+        const userId = userResult[0].id;
 
         // Get the plan ID from the price
         let planId = null;
@@ -219,13 +219,13 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
             planId = subscription.items.data[0].price.metadata.plan_id;
         } else {
             // Try to find the plan by Stripe price ID
-            const planResult = await pool.query(
+            const planResult = await executeQuery<any[]>(
                 `SELECT * FROM subscription_plans WHERE stripe_price_id = $1`,
                 [subscription.items.data[0]?.price.id]
             );
 
-            if (planResult.rows.length > 0) {
-                planId = planResult.rows[0].id;
+            if (planResult.length > 0) {
+                planId = planResult[0].id;
             } else {
                 console.error(`No plan found for price ${subscription.items.data[0]?.price.id}`);
                 return;
@@ -288,17 +288,17 @@ async function handlePaymentFailed(invoice: Stripe.Invoice) {
         }
 
         // Get user from customer ID
-        const userResult = await pool.query(
+        const userResult = await executeQuery<any[]>(
             `SELECT * FROM users WHERE stripe_customer_id = $1`,
             [invoice.customer]
         );
 
-        if (userResult.rows.length === 0) {
+        if (userResult.length === 0) {
             console.error(`No user found for customer ${invoice.customer}`);
             return;
         }
 
-        const userId = userResult.rows[0].id;
+        const userId = userResult[0].id;
 
         // Record the failed payment
         await pool.query(
@@ -365,17 +365,17 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
             : subscription.customer.id;
 
         // Get user from customer ID
-        const userResult = await pool.query(
+        const userResult = await executeQuery<any[]>(
             `SELECT * FROM users WHERE stripe_customer_id = $1`,
             [customerId]
         );
 
-        if (userResult.rows.length === 0) {
+        if (userResult.length === 0) {
             console.error(`No user found for customer ${customerId}`);
             return;
         }
 
-        const userId = userResult.rows[0].id;
+        const userId = userResult[0].id;
 
         // Get the plan ID from the price
         let planId = null;
@@ -383,13 +383,13 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
             planId = subscription.items.data[0].price.metadata.plan_id;
         } else {
             // Try to find the plan by Stripe price ID
-            const planResult = await pool.query(
+            const planResult = await executeQuery<any[]>(
                 `SELECT * FROM subscription_plans WHERE stripe_price_id = $1`,
                 [subscription.items.data[0]?.price.id]
             );
 
-            if (planResult.rows.length > 0) {
-                planId = planResult.rows[0].id;
+            if (planResult.length > 0) {
+                planId = planResult[0].id;
             } else {
                 console.error(`No plan found for price ${subscription.items.data[0]?.price.id}`);
                 return;
@@ -453,18 +453,18 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     try {
         // Get the subscription from the database
-        const subscriptionResult = await pool.query(
+        const subscriptionResult = await executeQuery<any[]>(
             `SELECT * FROM subscriptions WHERE stripe_subscription_id = $1`,
             [subscription.id]
         );
 
-        if (subscriptionResult.rows.length === 0) {
+        if (subscriptionResult.length === 0) {
             // This subscription doesn't exist in our database yet, treat it as new
             await handleSubscriptionCreated(subscription);
             return;
         }
 
-        const existingSubscription = subscriptionResult.rows[0];
+        const existingSubscription = subscriptionResult[0];
         const userId = existingSubscription.user_id;
 
         // Get the plan ID from the price
@@ -473,13 +473,13 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
             planId = subscription.items.data[0].price.metadata.plan_id;
         } else {
             // Try to find the plan by Stripe price ID
-            const planResult = await pool.query(
+            const planResult = await executeQuery<any[]>(
                 `SELECT * FROM subscription_plans WHERE stripe_price_id = $1`,
                 [subscription.items.data[0]?.price.id]
             );
 
-            if (planResult.rows.length > 0) {
-                planId = planResult.rows[0].id;
+            if (planResult.length > 0) {
+                planId = planResult[0].id;
             }
         }
 
@@ -544,17 +544,17 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     try {
         // Get the subscription from the database
-        const subscriptionResult = await pool.query(
+        const subscriptionResult = await executeQuery<any[]>(
             `SELECT * FROM subscriptions WHERE stripe_subscription_id = $1`,
             [subscription.id]
         );
 
-        if (subscriptionResult.rows.length === 0) {
+        if (subscriptionResult.length === 0) {
             console.error(`No subscription found for Stripe subscription ${subscription.id}`);
             return;
         }
 
-        const existingSubscription = subscriptionResult.rows[0];
+        const existingSubscription = subscriptionResult[0];
         const userId = existingSubscription.user_id;
 
         // Update the subscription status

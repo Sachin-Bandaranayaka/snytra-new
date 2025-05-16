@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
         queryParams.push(limit, offset);
 
         // Execute the query
-        const result = await pool.query(query, queryParams);
+        const result = await executeQuery<any[]>(query, queryParams);
 
         // Also get the total count for pagination
         let countQuery = `
@@ -103,16 +103,16 @@ export async function GET(request: NextRequest) {
             countParams.push(endDate);
         }
 
-        const countResult = await pool.query(countQuery, countParams);
+        const countResult = await executeQuery<any[]>(countQuery, countParams);
 
         // Return the logs with pagination info
         return NextResponse.json({
-            logs: result.rows,
+            logs: result,
             pagination: {
-                total: parseInt(countResult.rows[0].total),
+                total: parseInt(countResult[0].total),
                 limit,
                 offset,
-                hasMore: parseInt(countResult.rows[0].total) > (offset + limit)
+                hasMore: parseInt(countResult[0].total) > (offset + limit)
             }
         });
     } catch (error) {
@@ -149,19 +149,19 @@ export async function POST(request: NextRequest) {
         }
 
         // Get the notification log details
-        const logResult = await pool.query(
+        const logResult = await executeQuery<any[]>(
             'SELECT * FROM notification_logs WHERE id = $1',
             [id]
         );
 
-        if (logResult.rowCount === 0) {
+        if (logResult.length === 0) {
             return NextResponse.json(
                 { error: 'Notification log not found' },
                 { status: 404 }
             );
         }
 
-        const log = logResult.rows[0];
+        const log = logResult[0];
 
         // Check if this is a notification that can be resent
         if (log.status === 'sent') {
@@ -173,7 +173,7 @@ export async function POST(request: NextRequest) {
 
         // For this simplified example, we'll just mark the notification as sent
         // In a real system, you would call the appropriate notification service here
-        const updateResult = await pool.query(
+        const updateResult = await executeQuery<any[]>(
             'UPDATE notification_logs SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
             ['sent', id]
         );
@@ -181,7 +181,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
             success: true,
             message: 'Notification resent successfully',
-            log: updateResult.rows[0]
+            log: updateResult[0]
         });
     } catch (error) {
         console.error('Error resending notification:', error);

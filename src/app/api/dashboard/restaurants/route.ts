@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
     try {
         // In a real application, we would get the user ID from a session or token
         // For now, we'll just fetch all restaurants
-        const { rows } = await pool.query(`
+        const rows = await executeQuery<any[]>(`
       SELECT id, name, description, address 
       FROM restaurants 
       ORDER BY name ASC

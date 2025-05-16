@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
@@ -18,7 +18,7 @@ export async function GET(
         const shiftId = params.id;
 
         // Fetch the shift
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `SELECT s.*, staff.name as staff_name, staff.role
       FROM staff_shifts s
       JOIN staff ON s.staff_id = staff.id
@@ -26,11 +26,11 @@ export async function GET(
             [shiftId]
         );
 
-        if (result.rows.length === 0) {
+        if (result.length === 0) {
             return NextResponse.json({ error: 'Shift not found' }, { status: 404 });
         }
 
-        const row = result.rows[0];
+        const row = result[0];
 
         // Format shift for response
         const shift = {
@@ -78,29 +78,29 @@ export async function PUT(
         }
 
         // Check if shift exists
-        const shiftCheck = await pool.query(
+        const shiftCheck = await executeQuery<any[]>(
             'SELECT id FROM staff_shifts WHERE id = $1',
             [shiftId]
         );
 
-        if (shiftCheck.rows.length === 0) {
+        if (shiftCheck.length === 0) {
             return NextResponse.json({ error: 'Shift not found' }, { status: 404 });
         }
 
         // Check if staff member exists
-        const staffCheck = await pool.query(
+        const staffCheck = await executeQuery<any[]>(
             'SELECT id, name, role FROM staff WHERE id = $1',
             [staffId]
         );
 
-        if (staffCheck.rows.length === 0) {
+        if (staffCheck.length === 0) {
             return NextResponse.json({ error: 'Staff member not found' }, { status: 404 });
         }
 
-        const staff = staffCheck.rows[0];
+        const staff = staffCheck[0];
 
         // Check for overlapping shifts for the same staff member (excluding this shift)
-        const overlapCheck = await pool.query(
+        const overlapCheck = await executeQuery<any[]>(
             `SELECT id 
       FROM staff_shifts 
       WHERE staff_id = $1 
@@ -114,7 +114,7 @@ export async function PUT(
             [staffId, date, shiftId, startTime, endTime]
         );
 
-        if (overlapCheck.rows.length > 0) {
+        if (overlapCheck.length > 0) {
             return NextResponse.json(
                 { error: 'This shift overlaps with an existing shift for this staff member' },
                 { status: 400 }
@@ -122,7 +122,7 @@ export async function PUT(
         }
 
         // Update the shift
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `UPDATE staff_shifts 
       SET staff_id = $1, shift_date = $2, start_time = $3, end_time = $4, notes = $5, updated_at = NOW()
       WHERE id = $6
@@ -130,7 +130,7 @@ export async function PUT(
             [staffId, date, startTime, endTime, notes || null, shiftId]
         );
 
-        const updatedShift = result.rows[0];
+        const updatedShift = result[0];
 
         return NextResponse.json({
             message: 'Shift updated successfully',
@@ -169,12 +169,12 @@ export async function DELETE(
         const shiftId = params.id;
 
         // Check if shift exists
-        const shiftCheck = await pool.query(
+        const shiftCheck = await executeQuery<any[]>(
             'SELECT id FROM staff_shifts WHERE id = $1',
             [shiftId]
         );
 
-        if (shiftCheck.rows.length === 0) {
+        if (shiftCheck.length === 0) {
             return NextResponse.json({ error: 'Shift not found' }, { status: 404 });
         }
 

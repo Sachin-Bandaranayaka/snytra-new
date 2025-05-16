@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import { prisma } from '@/lib/prisma';
 
 // Helper function to authenticate admin users
@@ -106,8 +106,8 @@ export async function GET(request: NextRequest) {
       ${whereClause}
     `;
 
-        const countResult = await pool.query(countQuery, params);
-        const total = parseInt(countResult.rows[0].total);
+        const countResult = await executeQuery<any[]>(countQuery, params);
+        const total = parseInt(countResult[0].total);
 
         // Get paginated submissions
         const selectQuery = `
@@ -119,12 +119,12 @@ export async function GET(request: NextRequest) {
     `;
 
         const dataParams = [...params, pageSize, offset];
-        const submissionsResult = await pool.query(selectQuery, dataParams);
+        const submissionsResult = await executeQuery<any[]>(selectQuery, dataParams);
 
         const totalPages = Math.ceil(total / pageSize);
 
         return NextResponse.json({
-            submissions: submissionsResult.rows,
+            submissions: submissionsResult,
             pagination: {
                 total,
                 page,
@@ -177,9 +177,9 @@ export async function PUT(request: NextRequest) {
       RETURNING id, name, email, phone, message, status, created_at, notes
     `;
 
-        const result = await pool.query(updateQuery, [status, notes, id]);
+        const result = await executeQuery<any[]>(updateQuery, [status, notes, id]);
 
-        if (result.rows.length === 0) {
+        if (result.length === 0) {
             return NextResponse.json(
                 { error: 'Submission not found' },
                 { status: 404 }
@@ -187,7 +187,7 @@ export async function PUT(request: NextRequest) {
         }
 
         return NextResponse.json({
-            submission: result.rows[0]
+            submission: result[0]
         });
 
     } catch (error) {

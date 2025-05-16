@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
@@ -18,7 +18,7 @@ export async function GET(
         const tableId = params.id;
 
         // Fetch table with current order and reservation
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `SELECT t.*, 
         o.id as order_id, o.status as order_status, o.created_at as order_time,
         r.id as reservation_id, r.customer_name, r.reservation_time, r.party_size
@@ -29,11 +29,11 @@ export async function GET(
             [tableId]
         );
 
-        if (result.rows.length === 0) {
+        if (result.length === 0) {
             return NextResponse.json({ error: 'Table not found' }, { status: 404 });
         }
 
-        const row = result.rows[0];
+        const row = result[0];
 
         // Format response
         const table = {
@@ -89,22 +89,22 @@ export async function PUT(
         }
 
         // Check if table exists
-        const tableCheck = await pool.query(
+        const tableCheck = await executeQuery<any[]>(
             'SELECT id FROM tables WHERE id = $1',
             [tableId]
         );
 
-        if (tableCheck.rows.length === 0) {
+        if (tableCheck.length === 0) {
             return NextResponse.json({ error: 'Table not found' }, { status: 404 });
         }
 
         // Check if new table number already exists (except for current table)
-        const duplicateCheck = await pool.query(
+        const duplicateCheck = await executeQuery<any[]>(
             'SELECT id FROM tables WHERE table_number = $1 AND id != $2',
             [tableNumber, tableId]
         );
 
-        if (duplicateCheck.rows.length > 0) {
+        if (duplicateCheck.length > 0) {
             return NextResponse.json(
                 { error: 'A table with this number already exists' },
                 { status: 400 }
@@ -112,7 +112,7 @@ export async function PUT(
         }
 
         // Update table
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `UPDATE tables 
        SET table_number = $1, capacity = $2, status = $3, location = $4, updated_at = NOW()
        WHERE id = $5
@@ -120,7 +120,7 @@ export async function PUT(
             [tableNumber, capacity, status || 'available', location || null, tableId]
         );
 
-        const table = result.rows[0];
+        const table = result[0];
 
         return NextResponse.json({
             message: 'Table updated successfully',
@@ -174,17 +174,17 @@ export async function PATCH(
         }
 
         // Check if table exists
-        const tableCheck = await pool.query(
+        const tableCheck = await executeQuery<any[]>(
             'SELECT id FROM tables WHERE id = $1',
             [tableId]
         );
 
-        if (tableCheck.rows.length === 0) {
+        if (tableCheck.length === 0) {
             return NextResponse.json({ error: 'Table not found' }, { status: 404 });
         }
 
         // Update table status
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `UPDATE tables 
        SET status = $1, updated_at = NOW()
        WHERE id = $2
@@ -195,9 +195,9 @@ export async function PATCH(
         return NextResponse.json({
             message: 'Table status updated successfully',
             table: {
-                id: result.rows[0].id,
-                tableNumber: result.rows[0].table_number,
-                status: result.rows[0].status
+                id: result[0].id,
+                tableNumber: result[0].table_number,
+                status: result[0].status
             }
         });
     } catch (error) {
@@ -224,22 +224,22 @@ export async function DELETE(
         const tableId = params.id;
 
         // Check if table exists
-        const tableCheck = await pool.query(
+        const tableCheck = await executeQuery<any[]>(
             'SELECT id FROM tables WHERE id = $1',
             [tableId]
         );
 
-        if (tableCheck.rows.length === 0) {
+        if (tableCheck.length === 0) {
             return NextResponse.json({ error: 'Table not found' }, { status: 404 });
         }
 
         // Check if table has active orders
-        const activeOrders = await pool.query(
+        const activeOrders = await executeQuery<any[]>(
             `SELECT id FROM orders WHERE table_id = $1 AND status IN ('pending', 'processing', 'ready')`,
             [tableId]
         );
 
-        if (activeOrders.rows.length > 0) {
+        if (activeOrders.length > 0) {
             return NextResponse.json(
                 { error: 'Cannot delete table with active orders' },
                 { status: 400 }
@@ -247,7 +247,7 @@ export async function DELETE(
         }
 
         // Check if table has upcoming reservations
-        const upcomingReservations = await pool.query(
+        const upcomingReservations = await executeQuery<any[]>(
             `SELECT id FROM reservations 
        WHERE table_id = $1 
        AND status = 'confirmed' 
@@ -255,7 +255,7 @@ export async function DELETE(
             [tableId]
         );
 
-        if (upcomingReservations.rows.length > 0) {
+        if (upcomingReservations.length > 0) {
             return NextResponse.json(
                 { error: 'Cannot delete table with upcoming reservations' },
                 { status: 400 }

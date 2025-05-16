@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function PUT(request: Request, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
@@ -14,12 +14,12 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
 
     try {
         // Check if message exists
-        const messageCheck = await pool.query(
+        const messageCheck = await executeQuery<any[]>(
             'SELECT id FROM staff_messages WHERE id = $1',
             [messageId]
         );
 
-        if (messageCheck.rowCount === 0) {
+        if (messageCheck.length === 0) {
             return NextResponse.json(
                 { success: false, error: 'Message not found' },
                 { status: 404 }
@@ -27,14 +27,14 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
         }
 
         // Mark message as read
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             'UPDATE staff_messages SET is_read = true WHERE id = $1 RETURNING *',
             [messageId]
         );
 
         return NextResponse.json({
             success: true,
-            message: result.rows[0]
+            message: result[0]
         });
     } catch (error: any) {
         console.error('Error marking message as read:', error);
@@ -60,12 +60,12 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
         }
 
         // Check if recipient exists
-        const recipientCheck = await pool.query(
+        const recipientCheck = await executeQuery<any[]>(
             'SELECT id FROM staff WHERE id = $1',
             [recipientId]
         );
 
-        if (recipientCheck.rowCount === 0) {
+        if (recipientCheck.length === 0) {
             return NextResponse.json(
                 { success: false, error: 'Recipient not found' },
                 { status: 404 }
@@ -88,12 +88,12 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
         query += ' RETURNING id';
 
         // Mark messages as read
-        const result = await pool.query(query, params);
+        const result = await executeQuery<any[]>(query, params);
 
         return NextResponse.json({
             success: true,
-            count: result.rowCount,
-            message: `Marked ${result.rowCount} messages as read`
+            count: result.length,
+            message: `Marked ${result.length} messages as read`
         });
     } catch (error: any) {
         console.error('Error marking messages as read:', error);

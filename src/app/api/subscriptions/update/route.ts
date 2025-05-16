@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 // Initialize Stripe with the secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
@@ -34,19 +34,19 @@ export async function POST(request: NextRequest) {
         }
 
         // Check if subscription exists and belongs to the user
-        const checkResult = await pool.query(
+        const checkResult = await executeQuery<any[]>(
             'SELECT * FROM subscriptions WHERE id = $1 AND user_id = $2',
             [subscriptionId, userId]
         );
 
-        if (checkResult.rows.length === 0) {
+        if (checkResult.length === 0) {
             return NextResponse.json(
                 { error: 'Subscription not found or does not belong to this user' },
                 { status: 404 }
             );
         }
 
-        const subscription = checkResult.rows[0];
+        const subscription = checkResult[0];
 
         // Check if the subscription is active
         if (subscription.status !== 'active') {
@@ -57,23 +57,23 @@ export async function POST(request: NextRequest) {
         }
 
         // Get new plan details
-        const planResult = await pool.query(
+        const planResult = await executeQuery<any[]>(
             'SELECT * FROM subscription_plans WHERE id = $1',
             [newPlanId]
         );
 
-        if (planResult.rows.length === 0) {
+        if (planResult.length === 0) {
             return NextResponse.json(
                 { error: 'New subscription plan not found' },
                 { status: 404 }
             );
         }
 
-        const newPlan = planResult.rows[0];
+        const newPlan = planResult[0];
         const stripePriceId = newPlan.stripe_price_id;
 
         // Get the user's current subscription
-        const subscriptionResult = await pool.query(
+        const subscriptionResult = await executeQuery<any[]>(
             `SELECT * FROM subscriptions 
              WHERE user_id = $1 
              AND status = 'active' 
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
             [userId]
         );
 
-        if (subscriptionResult.rows.length === 0) {
+        if (subscriptionResult.length === 0) {
             return NextResponse.json(
                 { error: 'No active subscription found for this user' },
                 { status: 404 }

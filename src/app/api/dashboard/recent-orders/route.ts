@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
     try {
         // Fetch the 5 most recent orders
-        const { rows } = await pool.query(`
+        const rows = await executeQuery<any[]>(`
       SELECT id, customer_name, status, total_amount, created_at
       FROM orders
       ORDER BY created_at DESC

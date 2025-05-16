@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 /**
  * Get all available features
@@ -7,12 +7,12 @@ import { pool } from '@/lib/db';
 export async function GET(request: NextRequest) {
     try {
         // Get all features
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `SELECT * FROM features ORDER BY name ASC`
         );
 
         // If no features exist, create default ones
-        if (result.rows.length === 0) {
+        if (result.length === 0) {
             const defaultFeatures = [
                 { key: 'menu_management', name: 'Menu Management', description: 'Create and manage menus for your restaurant' },
                 { key: 'online_ordering', name: 'Online Ordering', description: 'Accept orders online from customers' },
@@ -41,20 +41,20 @@ export async function GET(request: NextRequest) {
             }
 
             // Get all features again
-            const updatedResult = await pool.query(
+            const updatedResult = await executeQuery<any[]>(
                 `SELECT * FROM features ORDER BY name ASC`
             );
 
             return NextResponse.json({
                 success: true,
-                features: updatedResult.rows,
+                features: updatedResult,
                 message: 'Default features created'
             });
         }
 
         return NextResponse.json({
             success: true,
-            features: result.rows
+            features: result
         });
     } catch (error) {
         console.error('Error fetching features:', error);
@@ -81,12 +81,12 @@ export async function POST(request: NextRequest) {
         }
 
         // Check if feature already exists
-        const existingResult = await pool.query(
+        const existingResult = await executeQuery<any[]>(
             `SELECT * FROM features WHERE key = $1`,
             [key]
         );
 
-        if (existingResult.rows.length > 0) {
+        if (existingResult.length > 0) {
             return NextResponse.json(
                 { error: 'Feature with this key already exists', success: false },
                 { status: 409 }
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Create new feature
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `INSERT INTO features (key, name, description, created_at, updated_at)
              VALUES ($1, $2, $3, NOW(), NOW())
              RETURNING *`,
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({
             success: true,
-            feature: result.rows[0]
+            feature: result[0]
         });
     } catch (error) {
         console.error('Error creating feature:', error);

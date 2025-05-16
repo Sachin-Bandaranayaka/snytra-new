@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import { notificationService } from '@/lib/notification-service';
 
 export async function POST(request: NextRequest) {
@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Get the waitlist entry details
-        const waitlistResult = await pool.query(
+        const waitlistResult = await executeQuery<any[]>(
             `SELECT 
         w.id,
         w.name AS customer_name,
@@ -35,11 +35,11 @@ export async function POST(request: NextRequest) {
             [waitlistId]
         );
 
-        if (waitlistResult.rowCount === 0) {
+        if (waitlistResult.length === 0) {
             return NextResponse.json({ error: 'Waitlist entry not found' }, { status: 404 });
         }
 
-        const waitlistEntry = waitlistResult.rows[0];
+        const waitlistEntry = waitlistResult[0];
 
         // Check if a table is assigned
         if (!waitlistEntry.table_id) {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
     try {
@@ -35,10 +35,10 @@ export async function GET(req: NextRequest) {
         `;
 
         console.log('Executing query:', query);
-        const result = await pool.query(query, [date, time]);
+        const result = await executeQuery<any[]>(query, [date, time]);
 
         return NextResponse.json({
-            tables: result.rows,
+            tables: result,
             success: true
         });
     } catch (error: any) {

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function GET() {
   try {
@@ -10,7 +10,7 @@ export async function GET() {
     // 3. Items marked as "featured" by the restaurant
     // For this implementation, we'll use a combination of these
 
-    const popularItems = await pool.query(`
+    const popularItems = await executeQuery<any[]>(`
       SELECT 
         mi.id,
         mi.name,
@@ -38,7 +38,7 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      items: popularItems.rows.map(item => ({
+      items: popularItems.map(item => ({
         ...item,
         // Ensure price is a number
         price: parseFloat(item.price),

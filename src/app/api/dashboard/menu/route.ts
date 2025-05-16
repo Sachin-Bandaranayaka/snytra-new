@@ -1,25 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
     try {
         // Fetch categories
-        const categoriesQuery = await pool.query(`
+        const categoriesQuery = await executeQuery<any[]>(`
       SELECT id, name, is_active 
       FROM categories 
       ORDER BY name ASC
     `);
 
         // Fetch menu items
-        const menuItemsQuery = await pool.query(`
+        const menuItemsQuery = await executeQuery<any[]>(`
       SELECT id, name, description, price, category_id, image_url, is_available
       FROM menu_items
       ORDER BY name ASC
     `);
 
         return NextResponse.json({
-            categories: categoriesQuery.rows,
-            menuItems: menuItemsQuery.rows,
+            categories: categoriesQuery,
+            menuItems: menuItemsQuery,
             success: true
         });
     } catch (error: any) {

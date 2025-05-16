@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
     try {
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
         }
 
         // Get all subscriptions for the user with plan details
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `SELECT 
                 s.id, 
                 s.user_id,
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
         );
 
         return NextResponse.json({
-            subscriptions: result.rows
+            subscriptions: result
         });
     } catch (error) {
         console.error('Error fetching subscriptions:', error);

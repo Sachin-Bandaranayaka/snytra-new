@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import { notificationService, NotificationChannel, NotificationType } from '@/lib/notification-service';
 
 export async function POST(request: NextRequest) {
@@ -19,8 +19,8 @@ export async function POST(request: NextRequest) {
     };
 
     // Get restaurant info
-    const restaurantResult = await pool.query('SELECT name, address, phone, email FROM restaurants LIMIT 1');
-    const restaurant = restaurantResult.rows[0] || {
+    const restaurantResult = await executeQuery<any[]>('SELECT name, address, phone, email FROM restaurants LIMIT 1');
+    const restaurant = restaurantResult[0] || {
       name: 'Our Restaurant',
       address: '123 Main St, City',
       phone: '(555) 123-4567',

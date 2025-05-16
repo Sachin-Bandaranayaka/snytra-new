@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
@@ -14,7 +14,7 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
 
     try {
         // Get order status from database
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `SELECT id, status, 
               EXTRACT(EPOCH FROM (NOW() - created_at))/60 AS elapsed_minutes,
               preparation_time_minutes AS estimated_time
@@ -23,14 +23,14 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
             [orderId]
         );
 
-        if (result.rows.length === 0) {
+        if (result.length === 0) {
             return NextResponse.json(
                 { success: false, error: 'Order not found' },
                 { status: 404 }
             );
         }
 
-        const order = result.rows[0];
+        const order = result[0];
 
         // Calculate estimated time based on order status and elapsed time
         let estimatedTime = order.estimated_time || 15; // Default 15 minutes if not set
@@ -89,7 +89,7 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
         }
 
         // Update order status in database
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `UPDATE orders 
              SET status = $1, updated_at = CURRENT_TIMESTAMP
              WHERE id = $2
@@ -97,14 +97,14 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
             [status, orderId]
         );
 
-        if (result.rowCount === 0) {
+        if (result.length === 0) {
             return NextResponse.json(
                 { success: false, error: 'Order not found' },
                 { status: 404 }
             );
         }
 
-        const updatedOrder = result.rows[0];
+        const updatedOrder = result[0];
 
         return NextResponse.json({
             success: true,

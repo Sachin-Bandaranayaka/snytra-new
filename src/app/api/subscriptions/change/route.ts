@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Get user and subscription details
-        const userResult = await pool.query(
+        const userResult = await executeQuery<any[]>(
             `SELECT 
         users.stripe_customer_id,
         subscriptions.stripe_subscription_id,
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
             [userId]
         );
 
-        if (userResult.rows.length === 0) {
+        if (userResult.length === 0) {
             return NextResponse.json(
                 { error: 'User or active subscription not found' },
                 { status: 404 }
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
             stripe_customer_id: stripeCustomerId,
             stripe_subscription_id: stripeSubscriptionId,
             plan_id: currentPlanId
-        } = userResult.rows[0];
+        } = userResult[0];
 
         // Check if trying to change to the same plan
         if (currentPlanId === newPlanId) {
@@ -54,19 +54,19 @@ export async function POST(request: NextRequest) {
         }
 
         // Get pricing details for the new plan
-        const planResult = await pool.query(
+        const planResult = await executeQuery<any[]>(
             `SELECT stripe_price_id FROM subscription_plans WHERE id = $1`,
             [newPlanId]
         );
 
-        if (planResult.rows.length === 0) {
+        if (planResult.length === 0) {
             return NextResponse.json(
                 { error: 'Subscription plan not found' },
                 { status: 404 }
             );
         }
 
-        const stripePriceId = planResult.rows[0].stripe_price_id;
+        const stripePriceId = planResult[0].stripe_price_id;
 
         // Update subscription in Stripe
         await stripe.subscriptions.update(stripeSubscriptionId, {

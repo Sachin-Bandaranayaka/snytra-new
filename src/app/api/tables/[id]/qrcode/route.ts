@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 // POST handler to update QR code URL for a table
 export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
@@ -25,12 +25,12 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
         }
 
         // Update the QR code URL in the database
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             'UPDATE tables SET qr_code_url = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
             [qr_code_url, tableId]
         );
 
-        if (result.rowCount === 0) {
+        if (result.length === 0) {
             return NextResponse.json(
                 { success: false, error: 'Table not found' },
                 { status: 404 }
@@ -39,7 +39,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
 
         return NextResponse.json({
             success: true,
-            table: result.rows[0]
+            table: result[0]
         });
     } catch (error: any) {
         console.error('Error updating table QR code:', error);

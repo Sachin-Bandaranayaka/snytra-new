@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import Stripe from 'stripe';
 
 // Initialize Stripe with your secret key
@@ -22,7 +22,7 @@ export async function GET(
         }
 
         // Get user data with Stripe customer ID
-        const { rows: userRows } = await pool.query(
+        const userRows = await executeQuery<any[]>(
             `SELECT id, name, email, stripe_customer_id, subscription_status 
              FROM users 
              WHERE id = $1`,
@@ -53,7 +53,7 @@ export async function GET(
         }
 
         // Try to fetch invoices from our database first
-        const { rows: dbInvoices } = await pool.query(
+        const dbInvoices = await executeQuery<any[]>(
             `SELECT 
                 id, 
                 stripe_invoice_id, 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import Stripe from 'stripe';
 
 // Initialize Stripe
@@ -16,15 +16,15 @@ export async function GET(
         const { userId } = await params;
 
         // 1. First, get the user's subscription details from our database
-        const { rows: subscriptionRows } = await pool.query(
+        const subscriptionRows = await executeQuery<any[]>(
             `SELECT 
-        s.id, s.user_id, s.plan_id, s.status, s.stripe_subscription_id,
-        s.start_date, s.end_date, s.created_at, s.updated_at,
-        p.name as plan_name, p.price as amount, p.billing_interval as interval
-      FROM subscriptions s
-      LEFT JOIN subscription_plans p ON s.plan_id = p.id
-      WHERE s.user_id = $1 AND s.status = 'active'
-      ORDER BY s.created_at DESC LIMIT 1`,
+                s.id, s.user_id, s.plan_id, s.status, s.stripe_subscription_id,
+                s.start_date, s.end_date, s.created_at, s.updated_at,
+                p.name as plan_name, p.price as amount, p.billing_interval as interval
+            FROM subscriptions s
+            LEFT JOIN subscription_plans p ON s.plan_id = p.id
+            WHERE s.user_id = $1 AND s.status = 'active'
+            ORDER BY s.created_at DESC LIMIT 1`,
             [userId]
         );
 

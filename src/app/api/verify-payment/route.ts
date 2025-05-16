@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
     apiVersion: '2023-10-16',
@@ -26,13 +26,13 @@ export async function GET(request: NextRequest) {
 
         if (!orderId) {
             // Try to find the order ID in the database
-            const result = await pool.query(
+            const result = await executeQuery<any[]>(
                 `SELECT id FROM orders WHERE session_id = $1 LIMIT 1`,
                 [sessionId]
             );
 
-            if (result.rows.length > 0) {
-                orderId = result.rows[0].id;
+            if (result.length > 0) {
+                orderId = result[0].id;
             } else {
                 return NextResponse.json(
                     { error: 'Order not found' },

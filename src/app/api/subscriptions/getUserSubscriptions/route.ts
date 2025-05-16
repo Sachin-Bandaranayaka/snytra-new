@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
     try {
@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
         }
 
         // Get all subscriptions for the user
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `SELECT s.*, p.name as plan_name, p.price, p.billing_interval
        FROM subscriptions s
        JOIN subscription_plans p ON s.plan_id = p.id
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
         );
 
         return NextResponse.json({
-            subscriptions: result.rows
+            subscriptions: result
         });
 
     } catch (error) {

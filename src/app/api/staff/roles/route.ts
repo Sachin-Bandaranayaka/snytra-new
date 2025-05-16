@@ -1,16 +1,16 @@
 import { NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function GET() {
     try {
-        const result = await pool.query(`
+        const result = await executeQuery<any[]>(`
       SELECT * FROM staff_roles
       ORDER BY id
     `);
 
         return NextResponse.json({
             success: true,
-            roles: result.rows
+            roles: result
         });
     } catch (error: any) {
         console.error('Error fetching staff roles:', error);
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
             );
         }
 
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `INSERT INTO staff_roles (name, description, permissions)
        VALUES ($1, $2, $3)
        RETURNING *`,
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json({
             success: true,
-            role: result.rows[0]
+            role: result[0]
         });
     } catch (error: any) {
         console.error('Error creating staff role:', error);

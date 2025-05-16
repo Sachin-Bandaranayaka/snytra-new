@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
@@ -13,7 +13,7 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
     }
 
     try {
-        const result = await pool.query(`
+        const result = await executeQuery<any[]>(`
       SELECT ss.*, 
              s.first_name, s.last_name,
              sr.name as role_name
@@ -23,7 +23,7 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
       WHERE ss.id = $1
     `, [shiftId]);
 
-        if (result.rowCount === 0) {
+        if (result.length === 0) {
             return NextResponse.json(
                 { success: false, error: 'Shift not found' },
                 { status: 404 }
@@ -32,7 +32,7 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
 
         return NextResponse.json({
             success: true,
-            shift: result.rows[0]
+            shift: result[0]
         });
     } catch (error: any) {
         console.error('Error fetching shift:', error);
@@ -68,12 +68,12 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
         } = body;
 
         // Check if shift exists
-        const shiftCheck = await pool.query(
+        const shiftCheck = await executeQuery<any[]>(
             'SELECT id FROM staff_shifts WHERE id = $1',
             [shiftId]
         );
 
-        if (shiftCheck.rowCount === 0) {
+        if (shiftCheck.length === 0) {
             return NextResponse.json(
                 { success: false, error: 'Shift not found' },
                 { status: 404 }
@@ -87,12 +87,12 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
 
         if (staff_id !== undefined) {
             // Check if staff exists
-            const staffCheck = await pool.query(
+            const staffCheck = await executeQuery<any[]>(
                 'SELECT id FROM staff WHERE id = $1',
                 [staff_id]
             );
 
-            if (staffCheck.rowCount === 0) {
+            if (staffCheck.length === 0) {
                 return NextResponse.json(
                     { success: false, error: 'Staff member not found' },
                     { status: 400 }
@@ -144,14 +144,14 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
         values.push(shiftId);
 
         // Execute the update
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `UPDATE staff_shifts SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
             values
         );
 
         return NextResponse.json({
             success: true,
-            shift: result.rows[0]
+            shift: result[0]
         });
     } catch (error: any) {
         console.error('Error updating shift:', error);
@@ -176,12 +176,12 @@ export async function DELETE(request: Request, props: { params: Promise<{ id: st
 
     try {
         // Check if shift exists
-        const shiftCheck = await pool.query(
+        const shiftCheck = await executeQuery<any[]>(
             'SELECT id FROM staff_shifts WHERE id = $1',
             [shiftId]
         );
 
-        if (shiftCheck.rowCount === 0) {
+        if (shiftCheck.length === 0) {
             return NextResponse.json(
                 { success: false, error: 'Shift not found' },
                 { status: 404 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
@@ -84,20 +84,20 @@ export async function GET(request: NextRequest) {
 
             // Prepare and return the analytics data
             const analytics = {
-                totalRevenue: parseFloat(totalStatsResult.rows[0].total_revenue) || 0,
-                totalOrders: parseInt(totalStatsResult.rows[0].total_orders) || 0,
-                averageOrderValue: parseFloat(totalStatsResult.rows[0].avg_order_value) || 0,
-                dailySales: dailySalesResult.rows.map(row => ({
+                totalRevenue: parseFloat(totalStatsResult[0].total_revenue) || 0,
+                totalOrders: parseInt(totalStatsResult[0].total_orders) || 0,
+                averageOrderValue: parseFloat(totalStatsResult[0].avg_order_value) || 0,
+                dailySales: dailySalesResult.map(row => ({
                     date: row.date.toISOString().split('T')[0],
                     total: parseFloat(row.total),
                     orderCount: parseInt(row.order_count)
                 })),
-                popularItems: popularItemsResult.rows.map(row => ({
+                popularItems: popularItemsResult.map(row => ({
                     name: row.name,
                     quantity: parseInt(row.quantity),
                     revenue: parseFloat(row.revenue)
                 })),
-                orderStatsByStatus: orderStatusResult.rows.map(row => ({
+                orderStatsByStatus: orderStatusResult.map(row => ({
                     status: row.status,
                     count: parseInt(row.count)
                 }))

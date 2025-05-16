@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
@@ -38,13 +38,13 @@ export async function GET(
         }
 
         // Execute query
-        const result = await pool.query(query, queryParams);
+        const result = await executeQuery<any[]>(query, queryParams);
 
-        if (result.rows.length === 0) {
+        if (result.length === 0) {
             return NextResponse.json({ error: 'Reservation not found' }, { status: 404 });
         }
 
-        const row = result.rows[0];
+        const row = result[0];
 
         // Determine if this is a public (by phone) or authenticated request
         const isPublic = !session && phone;
@@ -125,22 +125,22 @@ export async function PUT(
             checkParams.push(phone);
         }
 
-        const checkResult = await pool.query(checkQuery, checkParams);
+        const checkResult = await executeQuery<any[]>(checkQuery, checkParams);
 
-        if (checkResult.rows.length === 0) {
+        if (checkResult.length === 0) {
             return NextResponse.json(
                 { error: 'Reservation not found or unauthorized' },
                 { status: 404 }
             );
         }
 
-        const currentReservation = checkResult.rows[0];
+        const currentReservation = checkResult[0];
 
         // Public users can only modify limited fields
         if (verifyPhone) {
             // Public users can only update non-critical fields
             // and can't change status or table
-            const limitedUpdate = await pool.query(
+            const limitedUpdate = await executeQuery<any[]>(
                 `UPDATE reservations 
                  SET name = $1, 
                      email = $2, 
@@ -158,14 +158,14 @@ export async function PUT(
                 ]
             );
 
-            if (limitedUpdate.rows.length === 0) {
+            if (limitedUpdate.length === 0) {
                 return NextResponse.json(
                     { error: 'Failed to update reservation' },
                     { status: 400 }
                 );
             }
 
-            const updatedReservation = limitedUpdate.rows[0];
+            const updatedReservation = limitedUpdate[0];
 
             return NextResponse.json({
                 message: 'Reservation updated successfully',
@@ -202,7 +202,7 @@ export async function PUT(
                 }
 
                 // Check if the time slot is available
-                const reservationsCountResult = await pool.query(
+                const reservationsCountResult = await executeQuery<any[]>(
                     `SELECT COUNT(*) as count 
                      FROM reservations 
                      WHERE date = $1 AND time = $2 AND status IN ('pending', 'confirmed') AND id != $3`,
@@ -211,19 +211,19 @@ export async function PUT(
 
                 const dayOfWeek = new Date(newDate).getDay();
 
-                const settingsResult = await pool.query(
+                const settingsResult = await executeQuery<any[]>(
                     'SELECT * FROM reservation_settings WHERE day_of_week = $1 AND is_active = true',
                     [dayOfWeek]
                 );
 
-                if (settingsResult.rows.length === 0) {
+                if (settingsResult.length === 0) {
                     return NextResponse.json(
                         { error: 'Reservations are not available for this day' },
                         { status: 400 }
                     );
                 }
 
-                const settings = settingsResult.rows[0];
+                const settings = settingsResult[0];
                 const openTime = new Date(`${newDate}T${settings.open_time}`);
                 const closeTime = new Date(`${newDate}T${settings.close_time}`);
 
@@ -234,17 +234,17 @@ export async function PUT(
                     );
                 }
 
-                const currentReservations = parseInt(reservationsCountResult.rows[0].count);
+                const currentReservations = parseInt(reservationsCountResult[0].count);
                 const tablesPerInterval = settings.tables_per_interval;
 
-                const availableTablesResult = await pool.query(
+                const availableTablesResult = await executeQuery<any[]>(
                     `SELECT COUNT(*) as count 
                      FROM tables 
                      WHERE status != 'maintenance'`,
                     []
                 );
 
-                const availableTables = parseInt(availableTablesResult.rows[0].count);
+                const availableTables = parseInt(availableTablesResult[0].count);
 
                 if (currentReservations >= (tablesPerInterval || availableTables)) {
                     return NextResponse.json(
@@ -280,7 +280,7 @@ export async function PUT(
                 }
 
                 // Update the reservation with the new table and potentially other fields
-                const updateResult = await pool.query(
+                const updateResult = await executeQuery<any[]>(
                     `UPDATE reservations 
                      SET name = $1,
                          email = $2,
@@ -310,7 +310,7 @@ export async function PUT(
                 // Commit the transaction
                 await pool.query('COMMIT');
 
-                if (updateResult.rows.length === 0) {
+                if (updateResult.length === 0) {
                     return NextResponse.json(
                         { error: 'Failed to update reservation' },
                         { status: 400 }
@@ -318,7 +318,7 @@ export async function PUT(
                 }
 
                 // Get updated reservation with table info
-                const getUpdatedResult = await pool.query(
+                const getUpdatedResult = await executeQuery<any[]>(
                     `SELECT r.*, t.table_number
                      FROM reservations r
                      LEFT JOIN tables t ON r.table_id = t.id
@@ -326,7 +326,7 @@ export async function PUT(
                     [reservationId]
                 );
 
-                const updatedReservation = getUpdatedResult.rows[0];
+                const updatedReservation = getUpdatedResult[0];
 
                 return NextResponse.json({
                     message: 'Reservation updated successfully',
@@ -351,7 +351,7 @@ export async function PUT(
             }
         } else {
             // Simple update without changing tables
-            const updateResult = await pool.query(
+            const updateResult = await executeQuery<any[]>(
                 `UPDATE reservations 
                  SET name = $1,
                      email = $2,
@@ -376,7 +376,7 @@ export async function PUT(
                 ]
             );
 
-            if (updateResult.rows.length === 0) {
+            if (updateResult.length === 0) {
                 return NextResponse.json(
                     { error: 'Failed to update reservation' },
                     { status: 400 }
@@ -384,7 +384,7 @@ export async function PUT(
             }
 
             // Get updated reservation with table info
-            const getUpdatedResult = await pool.query(
+            const getUpdatedResult = await executeQuery<any[]>(
                 `SELECT r.*, t.table_number
                  FROM reservations r
                  LEFT JOIN tables t ON r.table_id = t.id
@@ -392,7 +392,7 @@ export async function PUT(
                 [reservationId]
             );
 
-            const updatedReservation = getUpdatedResult.rows[0];
+            const updatedReservation = getUpdatedResult[0];
 
             return NextResponse.json({
                 message: 'Reservation updated successfully',
@@ -449,16 +449,16 @@ export async function DELETE(
             checkParams.push(phone);
         }
 
-        const checkResult = await pool.query(checkQuery, checkParams);
+        const checkResult = await executeQuery<any[]>(checkQuery, checkParams);
 
-        if (checkResult.rows.length === 0) {
+        if (checkResult.length === 0) {
             return NextResponse.json(
                 { error: 'Reservation not found or unauthorized' },
                 { status: 404 }
             );
         }
 
-        const reservation = checkResult.rows[0];
+        const reservation = checkResult[0];
 
         // For authenticated staff, actually delete the reservation
         if (session && (session.user as any)?.role === 'admin') {

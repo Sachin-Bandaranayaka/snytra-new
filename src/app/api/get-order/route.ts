@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
     const url = new URL(request.url);
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
             );
 
             // If not found in orders table, try the vercel postgres orders
-            if (result.rows.length === 0) {
+            if (result.length === 0) {
                 try {
                     result = await pool.query(
                         `SELECT * FROM orders WHERE session_id = $1 LIMIT 1`,
@@ -42,14 +42,14 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        if (!result || result.rows.length === 0) {
+        if (!result || result.length === 0) {
             return NextResponse.json(
                 { error: 'Order not found' },
                 { status: 404 }
             );
         }
 
-        const order = result.rows[0];
+        const order = result[0];
 
         // Parse the items if they're stored as JSON string
         if (order.items && typeof order.items === 'string') {
@@ -60,11 +60,11 @@ export async function GET(request: NextRequest) {
             }
         } else if (!order.items) {
             // Try to fetch order items from order_items table
-            const itemsResult = await pool.query(
+            const itemsResult = await executeQuery<any[]>(
                 `SELECT * FROM order_items WHERE order_id = $1`,
                 [order.id]
             );
-            order.items = itemsResult.rows;
+            order.items = itemsResult;
         }
 
         return NextResponse.json(order);
