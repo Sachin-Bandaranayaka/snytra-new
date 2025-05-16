@@ -11,19 +11,34 @@ interface PageParams {
     };
 }
 
+interface Page {
+    id: number;
+    title: string;
+    slug: string;
+    parent_id: number | null;
+}
+
 export default function EditPage({ params }: PageParams) {
     const router = useRouter();
     const { id } = params;
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [pages, setPages] = useState<Page[]>([]);
 
     const [formData, setFormData] = useState({
         id: parseInt(id),
         title: '',
         slug: '',
         content: '',
-        status: 'draft'
+        status: 'draft',
+        parent_id: null as number | null,
+        menu_order: 0,
+        page_template: 'default',
+        show_in_menu: false,
+        show_in_footer: false,
+        meta_title: '',
+        meta_description: ''
     });
 
     useEffect(() => {
@@ -31,16 +46,18 @@ export default function EditPage({ params }: PageParams) {
             setIsLoading(true);
             setError(null);
             try {
-                // Normally we would fetch a specific page by ID, but the API route doesn't support that yet
-                // So we'll fetch all pages and find the one we need
+                // Fetch all pages for the parent dropdown
                 const response = await fetch('/api/pages', { credentials: 'include' });
 
                 if (!response.ok) {
-                    throw new Error('Failed to fetch page');
+                    throw new Error('Failed to fetch pages');
                 }
 
                 const data = await response.json();
                 const pageData = data.pages.find((page: any) => page.id === parseInt(id));
+
+                // Filter out the current page from the pages list to prevent circular references
+                setPages(data.pages.filter((page: any) => page.id !== parseInt(id)) || []);
 
                 if (!pageData) {
                     throw new Error('Page not found');
@@ -51,7 +68,14 @@ export default function EditPage({ params }: PageParams) {
                     title: pageData.title,
                     slug: pageData.slug,
                     content: pageData.content || '',
-                    status: pageData.status
+                    status: pageData.status,
+                    parent_id: pageData.parent_id || null,
+                    menu_order: pageData.menu_order || 0,
+                    page_template: pageData.page_template || 'default',
+                    show_in_menu: pageData.show_in_menu || false,
+                    show_in_footer: pageData.show_in_footer || false,
+                    meta_title: pageData.meta_title || '',
+                    meta_description: pageData.meta_description || ''
                 });
             } catch (err) {
                 console.error('Error fetching page:', err);
@@ -65,7 +89,31 @@ export default function EditPage({ params }: PageParams) {
     }, [id]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        const { name, value } = e.target;
+        const { name, value, type } = e.target;
+
+        // Handle checkboxes
+        if (type === 'checkbox') {
+            const checkbox = e.target as HTMLInputElement;
+            setFormData(prev => ({ ...prev, [name]: checkbox.checked }));
+            return;
+        }
+
+        // Handle select with null values
+        if (name === 'parent_id') {
+            setFormData(prev => ({
+                ...prev,
+                [name]: value === '' ? null : parseInt(value, 10)
+            }));
+            return;
+        }
+
+        // Handle number inputs
+        if (type === 'number') {
+            setFormData(prev => ({ ...prev, [name]: parseInt(value, 10) }));
+            return;
+        }
+
+        // Handle regular inputs
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
@@ -163,72 +211,222 @@ export default function EditPage({ params }: PageParams) {
 
             <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-lg overflow-hidden">
                 <div className="p-6 space-y-6">
-                    <div>
-                        <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-                            Title *
-                        </label>
-                        <input
-                            type="text"
-                            id="title"
-                            name="title"
-                            required
-                            value={formData.title}
-                            onChange={handleChange}
-                            className="block w-full border border-gray-300 rounded-md shadow-sm focus:ring-primary-orange focus:border-primary-orange sm:text-sm p-2"
-                            placeholder="Enter page title"
-                        />
-                    </div>
+                    {/* Basic Information */}
+                    <div className="border-b border-gray-200 pb-6">
+                        <h2 className="text-lg font-semibold mb-4">Basic Information</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+                                    Title *
+                                </label>
+                                <input
+                                    type="text"
+                                    id="title"
+                                    name="title"
+                                    required
+                                    value={formData.title}
+                                    onChange={handleChange}
+                                    className="block w-full border border-gray-300 rounded-md shadow-sm focus:ring-primary-orange focus:border-primary-orange sm:text-sm p-2"
+                                />
+                            </div>
 
-                    <div>
-                        <label htmlFor="slug" className="block text-sm font-medium text-gray-700 mb-1">
-                            Slug *
-                        </label>
-                        <input
-                            type="text"
-                            id="slug"
-                            name="slug"
-                            required
-                            value={formData.slug}
-                            onChange={handleChange}
-                            className="block w-full border border-gray-300 rounded-md shadow-sm focus:ring-primary-orange focus:border-primary-orange sm:text-sm p-2"
-                            placeholder="enter-page-slug"
-                        />
-                        <p className="mt-1 text-sm text-gray-500">
-                            URL-friendly version of the title.
-                        </p>
-                    </div>
-
-                    <div>
-                        <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-1">
-                            Content
-                        </label>
-                        <div className="mt-1">
-                            <TipTapEditor
-                                content={formData.content}
-                                onChange={handleContentChange}
-                                placeholder="Add your page content here..."
-                                className="min-h-[400px] prose max-w-full p-4"
-                            />
+                            <div>
+                                <label htmlFor="slug" className="block text-sm font-medium text-gray-700 mb-1">
+                                    Slug *
+                                </label>
+                                <input
+                                    type="text"
+                                    id="slug"
+                                    name="slug"
+                                    required
+                                    value={formData.slug}
+                                    onChange={handleChange}
+                                    className="block w-full border border-gray-300 rounded-md shadow-sm focus:ring-primary-orange focus:border-primary-orange sm:text-sm p-2"
+                                />
+                                <p className="mt-1 text-sm text-gray-500">
+                                    URL-friendly version of the title.
+                                </p>
+                            </div>
                         </div>
-                        <p className="mt-1 text-sm text-gray-500">
-                            Use the toolbar to format your content with headings, lists, links, images, and more.
-                        </p>
                     </div>
 
+                    {/* Page Content */}
+                    <div className="border-b border-gray-200 pb-6">
+                        <h2 className="text-lg font-semibold mb-4">Page Content</h2>
+                        <div>
+                            <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-1">
+                                Content
+                            </label>
+                            <div className="mt-1">
+                                <TipTapEditor
+                                    content={formData.content}
+                                    onChange={handleContentChange}
+                                    placeholder="Add your page content here..."
+                                    className="min-h-[400px] prose max-w-full p-4"
+                                />
+                            </div>
+                            <p className="mt-1 text-sm text-gray-500">
+                                Use the toolbar to format your content.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Site Structure */}
+                    <div className="border-b border-gray-200 pb-6">
+                        <h2 className="text-lg font-semibold mb-4">Site Structure</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label htmlFor="parent_id" className="block text-sm font-medium text-gray-700 mb-1">
+                                    Parent Page
+                                </label>
+                                <select
+                                    id="parent_id"
+                                    name="parent_id"
+                                    value={formData.parent_id === null ? '' : formData.parent_id}
+                                    onChange={handleChange}
+                                    className="block w-full border border-gray-300 rounded-md shadow-sm focus:ring-primary-orange focus:border-primary-orange sm:text-sm p-2"
+                                >
+                                    <option value="">None (Top Level)</option>
+                                    {pages.map((page) => (
+                                        <option key={page.id} value={page.id}>{page.title}</option>
+                                    ))}
+                                </select>
+                                <p className="mt-1 text-sm text-gray-500">
+                                    Select a parent page if this is a subpage.
+                                </p>
+                            </div>
+
+                            <div>
+                                <label htmlFor="menu_order" className="block text-sm font-medium text-gray-700 mb-1">
+                                    Menu Order
+                                </label>
+                                <input
+                                    type="number"
+                                    id="menu_order"
+                                    name="menu_order"
+                                    min="0"
+                                    value={formData.menu_order}
+                                    onChange={handleChange}
+                                    className="block w-full border border-gray-300 rounded-md shadow-sm focus:ring-primary-orange focus:border-primary-orange sm:text-sm p-2"
+                                />
+                                <p className="mt-1 text-sm text-gray-500">
+                                    Controls the order in menus (lower numbers appear first).
+                                </p>
+                            </div>
+
+                            <div>
+                                <label htmlFor="page_template" className="block text-sm font-medium text-gray-700 mb-1">
+                                    Page Template
+                                </label>
+                                <select
+                                    id="page_template"
+                                    name="page_template"
+                                    value={formData.page_template}
+                                    onChange={handleChange}
+                                    className="block w-full border border-gray-300 rounded-md shadow-sm focus:ring-primary-orange focus:border-primary-orange sm:text-sm p-2"
+                                >
+                                    <option value="default">Default</option>
+                                    <option value="full-width">Full Width</option>
+                                    <option value="sidebar">With Sidebar</option>
+                                    <option value="landing-page">Landing Page</option>
+                                </select>
+                                <p className="mt-1 text-sm text-gray-500">
+                                    Template affects the page layout.
+                                </p>
+                            </div>
+
+                            <div className="flex items-center space-x-6">
+                                <div className="flex items-center h-5">
+                                    <input
+                                        id="show_in_menu"
+                                        name="show_in_menu"
+                                        type="checkbox"
+                                        checked={formData.show_in_menu}
+                                        onChange={handleChange}
+                                        className="focus:ring-primary-orange h-4 w-4 text-primary-orange border-gray-300 rounded"
+                                    />
+                                    <label htmlFor="show_in_menu" className="ml-2 text-sm font-medium text-gray-700">
+                                        Show in Main Menu
+                                    </label>
+                                </div>
+
+                                <div className="flex items-center h-5">
+                                    <input
+                                        id="show_in_footer"
+                                        name="show_in_footer"
+                                        type="checkbox"
+                                        checked={formData.show_in_footer}
+                                        onChange={handleChange}
+                                        className="focus:ring-primary-orange h-4 w-4 text-primary-orange border-gray-300 rounded"
+                                    />
+                                    <label htmlFor="show_in_footer" className="ml-2 text-sm font-medium text-gray-700">
+                                        Show in Footer
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* SEO */}
+                    <div className="border-b border-gray-200 pb-6">
+                        <h2 className="text-lg font-semibold mb-4">SEO Settings</h2>
+                        <div className="space-y-4">
+                            <div>
+                                <label htmlFor="meta_title" className="block text-sm font-medium text-gray-700 mb-1">
+                                    Meta Title
+                                </label>
+                                <input
+                                    type="text"
+                                    id="meta_title"
+                                    name="meta_title"
+                                    value={formData.meta_title}
+                                    onChange={handleChange}
+                                    className="block w-full border border-gray-300 rounded-md shadow-sm focus:ring-primary-orange focus:border-primary-orange sm:text-sm p-2"
+                                    placeholder="Optional custom title for search engines"
+                                />
+                                <p className="mt-1 text-sm text-gray-500">
+                                    Leave empty to use page title.
+                                </p>
+                            </div>
+
+                            <div>
+                                <label htmlFor="meta_description" className="block text-sm font-medium text-gray-700 mb-1">
+                                    Meta Description
+                                </label>
+                                <textarea
+                                    id="meta_description"
+                                    name="meta_description"
+                                    rows={3}
+                                    value={formData.meta_description}
+                                    onChange={handleChange}
+                                    className="block w-full border border-gray-300 rounded-md shadow-sm focus:ring-primary-orange focus:border-primary-orange sm:text-sm p-2"
+                                    placeholder="Brief description for search engines"
+                                />
+                                <p className="mt-1 text-sm text-gray-500">
+                                    Keep under 160 characters for best SEO results.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Publishing Settings */}
                     <div>
-                        <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
-                            Status
-                        </label>
-                        <select
-                            id="status"
-                            name="status"
-                            value={formData.status}
-                            onChange={handleChange}
-                            className="block w-full border border-gray-300 rounded-md shadow-sm focus:ring-primary-orange focus:border-primary-orange sm:text-sm p-2"
-                        >
-                            <option value="draft">Draft</option>
-                            <option value="published">Published</option>
-                        </select>
+                        <h2 className="text-lg font-semibold mb-4">Publishing</h2>
+                        <div>
+                            <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+                                Status
+                            </label>
+                            <select
+                                id="status"
+                                name="status"
+                                value={formData.status}
+                                onChange={handleChange}
+                                className="block w-full border border-gray-300 rounded-md shadow-sm focus:ring-primary-orange focus:border-primary-orange sm:text-sm p-2"
+                            >
+                                <option value="draft">Draft</option>
+                                <option value="published">Published</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
