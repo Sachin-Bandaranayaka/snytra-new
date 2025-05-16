@@ -4,6 +4,7 @@
 import { expect, afterAll, beforeAll, afterEach, vi } from 'vitest';
 import { configureLogger } from '../lib/logger';
 import { cleanupTestDb } from '../lib/test-utils';
+import '@testing-library/jest-dom/vitest';
 
 // Configure environment for testing
 process.env.NODE_ENV = 'test';

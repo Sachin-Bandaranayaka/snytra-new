@@ -7,6 +7,7 @@ import CartProvider from "@/components/providers/CartProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import NoticesBanner from "@/components/NoticesBanner";
 import { Suspense } from "react";
+import InitMaintenanceMode from "./InitMaintenanceMode";
 
 export default function RootLayoutClient({
     children,
@@ -26,6 +27,9 @@ export default function RootLayoutClient({
     return (
         <AuthProvider>
             <CartProvider>
+                {/* Initialize maintenance mode */}
+                <InitMaintenanceMode />
+
                 <div className="flex flex-col min-h-screen">
                     {shouldShowNotices && <NoticesBanner />}
 

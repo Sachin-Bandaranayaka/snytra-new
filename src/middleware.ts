@@ -1,86 +1,67 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// This function can be marked `async` if using `await` inside
-export function middleware(request: NextRequest) {
-    // Get the pathname
-    const path = request.nextUrl.pathname;
+// Paths that should be accessible even in maintenance mode
+const ALLOWED_PATHS = [
+    '/api/settings',
+    '/api/auth',
+    '/api/maintenance-status',
+    '/admin',
+    '/login',
+    '/auth',
+    '/maintenance'
+];
 
-    // Define paths that require authentication
-    const adminProtectedPaths = [
-        '/admin/dashboard',
-        '/admin/orders',
-        '/admin/menu',
-        '/admin/users',
-        '/admin/contact-submissions',
-        '/admin/settings',
-        '/admin/blog',
-        '/admin/faqs',
-        '/admin/support-tickets',
-        '/admin/packages',
-        '/admin/notices',
-        '/admin/reviews',
-        '/admin/pages',
-        '/admin/subscriptions'
-    ];
+// Check if a path should be allowed during maintenance mode
+function isAllowedPath(path: string): boolean {
+    return ALLOWED_PATHS.some(allowedPath => path.startsWith(allowedPath));
+}
 
-    // Check if current path requires admin authentication
-    const isAdminProtectedPath = adminProtectedPaths.some(protectedPath =>
-        path.startsWith(protectedPath)
-    );
+// Check if user is an admin based on cookies
+function isAdmin(request: NextRequest): boolean {
+    // This is a simplified check. In a real app, you'd verify the session
+    // and check if the user has admin permissions
+    const sessionToken = request.cookies.get('next-auth.session-token')?.value;
+    const adminEmailCookie = request.cookies.get('admin_email')?.value;
 
-    // Handle admin-specific routes
-    if (isAdminProtectedPath && !path.includes('/admin/login')) {
-        // Check for either next-auth token or admin_email cookie
-        const authCookie = request.cookies.get('next-auth.session-token')?.value;
-        const adminEmailCookie = request.cookies.get('admin_email')?.value;
+    return !!sessionToken || !!adminEmailCookie;
+}
 
-        // Get user data from localStorage if available (client-side only, won't work in middleware)
-        let hasAuth = false;
-
-        // If either auth cookie is present, allow access
-        if (authCookie || adminEmailCookie) {
-            hasAuth = true;
-        }
-
-        // If no auth cookie, redirect to admin login
-        if (!hasAuth) {
-            const url = new URL('/admin/login', request.url);
-            url.searchParams.set('callbackUrl', path);
-            return NextResponse.redirect(url);
-        }
-    }
-
-    // Handle API routes that require authentication
-    if (path.startsWith('/api/') &&
-        (path.includes('/admin/') || path.includes('/contact/submissions'))) {
-
-        // Skip auth check for uploadthing routes
-        if (path.includes('/api/uploadthing')) {
+export async function middleware(request: NextRequest) {
+    // Check if we're in maintenance mode
+    try {
+        // Skip maintenance mode check for allowed paths
+        if (isAllowedPath(request.nextUrl.pathname)) {
             return NextResponse.next();
         }
 
-        // Check for either next-auth token or admin_email cookie
-        const authCookie = request.cookies.get('next-auth.session-token')?.value;
-        const adminEmailCookie = request.cookies.get('admin_email')?.value;
+        // Get maintenance mode status from a cookie instead of the database
+        const maintenanceCookie = request.cookies.get('maintenance_mode')?.value;
+        const isMaintenanceMode = maintenanceCookie === 'true';
 
-        // If neither auth cookie is present, return 403
-        if (!authCookie && !adminEmailCookie) {
-            return NextResponse.json(
-                { error: 'Unauthorized - Please login again' },
-                { status: 403 }
-            );
+        // If maintenance mode is enabled and user is not an admin
+        if (isMaintenanceMode && !isAdmin(request)) {
+            // Redirect to maintenance page
+            return NextResponse.rewrite(new URL('/maintenance', request.url));
         }
+    } catch (error) {
+        console.error('Error in middleware:', error);
+        // In case of error, allow the request to proceed to avoid blocking the site
     }
 
     return NextResponse.next();
 }
 
-// Configure which paths the middleware applies to
+// Only run middleware on specific paths
 export const config = {
     matcher: [
-        '/admin/:path*',
-        '/api/admin/:path*',
-        '/api/contact/submissions/:path*',
+        /*
+         * Match all request paths except:
+         * - _next/static (static files)
+         * - _next/image (image optimization files)
+         * - favicon.ico (favicon file)
+         * - public files (public folder)
+         */
+        '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
     ],
 }; 

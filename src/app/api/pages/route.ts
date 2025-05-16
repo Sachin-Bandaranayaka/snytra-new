@@ -1,38 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool, sql } from '@/lib/db';
-import { cookies } from 'next/headers';
+import { getSqlClient, executeQuery } from '@/lib/db';
+import { isUserAdmin } from '@/lib/authUtils';
 import { prisma } from '@/lib/prisma';
-
-// Helper: Check admin authentication using cookies API and database verification
-async function isAdmin() {
-    try {
-        // Get admin email from cookies - using the server-side cookies API
-        const cookieStore = cookies();
-        const adminEmail = await cookieStore.get('admin_email')?.value;
-
-        if (!adminEmail) {
-            return false;
-        }
-
-        // Verify admin role in database
-        const admin = await sql`
-            SELECT role FROM users WHERE email = ${adminEmail} LIMIT 1
-        `;
-
-        if (!admin || admin.length === 0 || admin[0].role !== 'admin') {
-            return false;
-        }
-
-        return true;
-    } catch (error) {
-        console.error('Error verifying admin:', error);
-        return false;
-    }
-}
 
 // GET: List all pages
 export async function GET() {
-    if (!(await isAdmin())) {
+    if (!(await isUserAdmin())) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
     try {
@@ -45,7 +18,7 @@ export async function GET() {
 
 // POST: Create a new page
 export async function POST(request: NextRequest) {
-    if (!(await isAdmin())) {
+    if (!(await isUserAdmin())) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
     try {
@@ -65,7 +38,7 @@ export async function POST(request: NextRequest) {
 
 // PATCH: Update a page (expects id in body)
 export async function PATCH(request: NextRequest) {
-    if (!(await isAdmin())) {
+    if (!(await isUserAdmin())) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
     try {
@@ -88,7 +61,7 @@ export async function PATCH(request: NextRequest) {
 
 // DELETE: Delete a page (expects id in body)
 export async function DELETE(request: NextRequest) {
-    if (!(await isAdmin())) {
+    if (!(await isUserAdmin())) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
     try {
