@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
     try {
         // Fetch the first restaurant (assuming there's only one for now)
         // In a multi-restaurant system, we could use a query param to specify which restaurant
-        const restaurantQuery = await pool.query(`
+        const restaurantQuery = await executeQuery<any[]>(`
       SELECT id, name, description, address, 
              COALESCE(phone, '') as phone, 
              COALESCE(email, '') as email, 
@@ -17,12 +17,12 @@ export async function GET(req: NextRequest) {
       LIMIT 1
     `);
 
-        if (restaurantQuery.rows.length === 0) {
+        if (restaurantQuery.length === 0) {
             // Instead of returning a 404 error, create a default restaurant
             console.log('No restaurant found, creating a default one');
 
             // Create a default restaurant
-            const insertResult = await pool.query(`
+            const insertResult = await executeQuery<any[]>(`
                 INSERT INTO restaurants (
                     name, 
                     description, 
@@ -57,14 +57,14 @@ export async function GET(req: NextRequest) {
             `);
 
             return NextResponse.json({
-                restaurant: insertResult.rows[0],
+                restaurant: insertResult[0],
                 success: true,
                 message: 'Default restaurant created'
             });
         }
 
         return NextResponse.json({
-            restaurant: restaurantQuery.rows[0],
+            restaurant: restaurantQuery[0],
             success: true
         });
     } catch (error: any) {

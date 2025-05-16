@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
@@ -47,10 +47,10 @@ export async function GET(request: NextRequest) {
         query += ` ORDER BY s.shift_date ASC, s.start_time ASC`;
 
         // Execute query
-        const result = await pool.query(query, queryParams);
+        const result = await executeQuery<any[]>(query, queryParams);
 
         // Format shifts for response
-        const shifts = result.rows.map(row => ({
+        const shifts = result.map(row => ({
             id: row.id,
             staffId: row.staff_id,
             staffName: row.staff_name,
@@ -92,19 +92,19 @@ export async function POST(request: NextRequest) {
         }
 
         // Check if staff member exists
-        const staffCheck = await pool.query(
+        const staffCheck = await executeQuery<any[]>(
             'SELECT id, name, role FROM staff WHERE id = $1',
             [staffId]
         );
 
-        if (staffCheck.rows.length === 0) {
+        if (staffCheck.length === 0) {
             return NextResponse.json({ error: 'Staff member not found' }, { status: 404 });
         }
 
-        const staff = staffCheck.rows[0];
+        const staff = staffCheck[0];
 
         // Check for overlapping shifts for the same staff member
-        const overlapCheck = await pool.query(
+        const overlapCheck = await executeQuery<any[]>(
             `SELECT id 
       FROM staff_shifts 
       WHERE staff_id = $1 
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
             [staffId, date, startTime, endTime]
         );
 
-        if (overlapCheck.rows.length > 0) {
+        if (overlapCheck.length > 0) {
             return NextResponse.json(
                 { error: 'This shift overlaps with an existing shift for this staff member' },
                 { status: 400 }
@@ -125,14 +125,14 @@ export async function POST(request: NextRequest) {
         }
 
         // Create new shift
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `INSERT INTO staff_shifts (staff_id, shift_date, start_time, end_time, notes)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING id, staff_id, shift_date, start_time, end_time, notes`,
             [staffId, date, startTime, endTime, notes || null]
         );
 
-        const newShift = result.rows[0];
+        const newShift = result[0];
 
         return NextResponse.json({
             message: 'Shift created successfully',

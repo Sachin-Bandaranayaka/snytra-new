@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 // Initialize Stripe with the secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
         const totalAmount = cartItems.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
 
         // Create an order in the database first
-        const orderResult = await pool.query(
+        const orderResult = await executeQuery<any[]>(
             `INSERT INTO orders (
                 customer_email, 
                 customer_name, 
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
             ]
         );
 
-        const orderId = orderResult.rows[0].id;
+        const orderId = orderResult[0].id;
 
         // Insert order items
         for (const item of cartItems) {

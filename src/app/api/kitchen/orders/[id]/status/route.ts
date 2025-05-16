@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import { initSocketServer, notifyOrderStatusChange } from '@/lib/socket-server';
 
 export async function PUT(request: Request, props: { params: Promise<{ id: string }> }) {
@@ -34,19 +34,19 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
         }
 
         // Update order status in the database
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             'UPDATE orders SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
             [status, orderId]
         );
 
-        if (result.rowCount === 0) {
+        if (result.length === 0) {
             return NextResponse.json(
                 { success: false, error: 'Order not found' },
                 { status: 404 }
             );
         }
 
-        const updatedOrder = result.rows[0];
+        const updatedOrder = result[0];
 
         // Initialize Socket.io server and emit status change event
         try {

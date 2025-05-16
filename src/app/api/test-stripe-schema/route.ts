@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
     try {
         // Test users table with stripe_customer_id
-        const usersResult = await pool.query(`
+        const usersResult = await executeQuery<any[]>(`
             SELECT column_name, data_type 
             FROM information_schema.columns 
             WHERE table_name = 'users' 
@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
         `);
 
         // Test subscription_events table
-        const eventsResult = await pool.query(`
+        const eventsResult = await executeQuery<any[]>(`
             SELECT EXISTS (
                 SELECT FROM information_schema.tables 
                 WHERE table_name = 'subscription_events'
@@ -21,8 +21,8 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json({
             success: true,
-            stripeColumnsInUsers: usersResult.rows,
-            subscriptionEventsTableExists: eventsResult.rows[0].table_exists
+            stripeColumnsInUsers: usersResult,
+            subscriptionEventsTableExists: eventsResult[0].table_exists
         });
     } catch (error: any) {
         console.error('Error testing Stripe schema:', error);

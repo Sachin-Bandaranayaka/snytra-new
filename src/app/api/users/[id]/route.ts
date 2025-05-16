@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import bcrypt from 'bcrypt';
 
 export async function GET(
@@ -17,9 +17,9 @@ export async function GET(
             WHERE id = $1
         `;
 
-        const result = await pool.query(query, [id]);
+        const result = await executeQuery<any[]>(query, [id]);
 
-        if (result.rowCount === 0) {
+        if (result.length === 0) {
             return NextResponse.json(
                 { error: 'User not found', success: false },
                 { status: 404 }
@@ -27,7 +27,7 @@ export async function GET(
         }
 
         return NextResponse.json({
-            user: result.rows[0],
+            user: result[0],
             success: true
         });
     } catch (error) {
@@ -50,9 +50,9 @@ export async function PATCH(
 
         // Check if user exists
         const checkQuery = 'SELECT id FROM users WHERE id = $1';
-        const checkResult = await pool.query(checkQuery, [id]);
+        const checkResult = await executeQuery<any[]>(checkQuery, [id]);
 
-        if (checkResult.rowCount === 0) {
+        if (checkResult.length === 0) {
             return NextResponse.json(
                 { error: 'User not found', success: false },
                 { status: 404 }
@@ -62,9 +62,9 @@ export async function PATCH(
         // If email is being changed, check if it's already taken
         if (email) {
             const checkEmailQuery = 'SELECT id FROM users WHERE email = $1 AND id != $2';
-            const emailCheck = await pool.query(checkEmailQuery, [email, id]);
+            const emailCheck = await executeQuery<any[]>(checkEmailQuery, [email, id]);
 
-            if (emailCheck.rowCount > 0) {
+            if (emailCheck.length > 0) {
                 return NextResponse.json(
                     { error: 'This email is already in use by another account', success: false },
                     { status: 400 }
@@ -110,10 +110,10 @@ export async function PATCH(
         updateQuery += `WHERE id = $${valueIndex} RETURNING id, name, email, role, created_at, updated_at`;
         updateValues.push(id);
 
-        const result = await pool.query(updateQuery, updateValues);
+        const result = await executeQuery<any[]>(updateQuery, updateValues);
 
         return NextResponse.json({
-            user: result.rows[0],
+            user: result[0],
             success: true
         });
     } catch (error) {
@@ -134,9 +134,9 @@ export async function DELETE(
 
         // Check if user exists
         const checkQuery = 'SELECT id FROM users WHERE id = $1';
-        const checkResult = await pool.query(checkQuery, [id]);
+        const checkResult = await executeQuery<any[]>(checkQuery, [id]);
 
-        if (checkResult.rowCount === 0) {
+        if (checkResult.length === 0) {
             return NextResponse.json(
                 { error: 'User not found', success: false },
                 { status: 404 }

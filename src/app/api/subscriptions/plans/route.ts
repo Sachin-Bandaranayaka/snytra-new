@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function GET() {
     try {
         // Get all active subscription plans
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `SELECT * FROM subscription_plans 
              WHERE is_active = true
              ORDER BY price ASC`
         );
 
         return NextResponse.json({
-            plans: result.rows
+            plans: result
         });
     } catch (error) {
         console.error('Error retrieving subscription plans:', error);

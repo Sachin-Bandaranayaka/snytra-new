@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
@@ -13,7 +13,7 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
     }
 
     try {
-        const result = await pool.query(`
+        const result = await executeQuery<any[]>(`
       SELECT s.*, 
              sr.name as role_name, 
              sr.permissions as role_permissions,
@@ -24,7 +24,7 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
       WHERE s.id = $1
     `, [staffId]);
 
-        if (result.rowCount === 0) {
+        if (result.length === 0) {
             return NextResponse.json(
                 { success: false, error: 'Staff member not found' },
                 { status: 404 }
@@ -33,7 +33,7 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
 
         return NextResponse.json({
             success: true,
-            staff: result.rows[0]
+            staff: result[0]
         });
     } catch (error: any) {
         console.error('Error fetching staff member:', error);
@@ -70,12 +70,12 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
         } = body;
 
         // Check if staff exists
-        const staffCheck = await pool.query(
+        const staffCheck = await executeQuery<any[]>(
             'SELECT id FROM staff WHERE id = $1',
             [staffId]
         );
 
-        if (staffCheck.rowCount === 0) {
+        if (staffCheck.length === 0) {
             return NextResponse.json(
                 { success: false, error: 'Staff member not found' },
                 { status: 404 }
@@ -138,14 +138,14 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
         values.push(staffId);
 
         // Execute the update
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `UPDATE staff SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
             values
         );
 
         return NextResponse.json({
             success: true,
-            staff: result.rows[0]
+            staff: result[0]
         });
     } catch (error: any) {
         console.error('Error updating staff member:', error);
@@ -170,12 +170,12 @@ export async function DELETE(request: Request, props: { params: Promise<{ id: st
 
     try {
         // Check if staff exists
-        const staffCheck = await pool.query(
+        const staffCheck = await executeQuery<any[]>(
             'SELECT id FROM staff WHERE id = $1',
             [staffId]
         );
 
-        if (staffCheck.rowCount === 0) {
+        if (staffCheck.length === 0) {
             return NextResponse.json(
                 { success: false, error: 'Staff member not found' },
                 { status: 404 }

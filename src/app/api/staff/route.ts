@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function GET() {
     try {
-        const result = await pool.query(`
+        const result = await executeQuery<any[]>(`
       SELECT s.*, 
              sr.name as role_name, 
              sr.permissions as role_permissions,
@@ -16,7 +16,7 @@ export async function GET() {
 
         return NextResponse.json({
             success: true,
-            staff: result.rows
+            staff: result
         });
     } catch (error: any) {
         console.error('Error fetching staff:', error);
@@ -54,12 +54,12 @@ export async function POST(request: Request) {
         }
 
         // Check if email already exists
-        const emailCheck = await pool.query(
+        const emailCheck = await executeQuery<any[]>(
             'SELECT id FROM staff WHERE email = $1',
             [email]
         );
 
-        if (emailCheck.rowCount > 0) {
+        if (emailCheck.length > 0) {
             return NextResponse.json(
                 { success: false, error: 'Email already in use' },
                 { status: 400 }
@@ -67,12 +67,12 @@ export async function POST(request: Request) {
         }
 
         // Check if role exists
-        const roleCheck = await pool.query(
+        const roleCheck = await executeQuery<any[]>(
             'SELECT id FROM staff_roles WHERE id = $1',
             [role_id]
         );
 
-        if (roleCheck.rowCount === 0) {
+        if (roleCheck.length === 0) {
             return NextResponse.json(
                 { success: false, error: 'Invalid role_id' },
                 { status: 400 }
@@ -80,7 +80,7 @@ export async function POST(request: Request) {
         }
 
         // Create new staff member
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `INSERT INTO staff 
         (user_id, role_id, first_name, last_name, email, phone, hire_date, status)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -99,7 +99,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json({
             success: true,
-            staff: result.rows[0]
+            staff: result[0]
         });
     } catch (error: any) {
         console.error('Error creating staff member:', error);

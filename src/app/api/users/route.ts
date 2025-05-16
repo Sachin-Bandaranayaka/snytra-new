@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import bcrypt from 'bcrypt';
 
 export async function GET(request: NextRequest) {
@@ -42,10 +42,10 @@ export async function GET(request: NextRequest) {
         // Add ordering
         query += ` ORDER BY u.created_at DESC`;
 
-        const result = await pool.query(query, queryParams);
+        const result = await executeQuery<any[]>(query, queryParams);
 
         return NextResponse.json({
-            users: result.rows,
+            users: result,
             success: true
         });
     } catch (error) {
@@ -72,9 +72,9 @@ export async function POST(request: NextRequest) {
 
         // Check if user with email already exists
         const checkEmailQuery = 'SELECT id FROM users WHERE email = $1';
-        const emailCheck = await pool.query(checkEmailQuery, [email]);
+        const emailCheck = await executeQuery<any[]>(checkEmailQuery, [email]);
 
-        if (emailCheck.rowCount > 0) {
+        if (emailCheck.length > 0) {
             return NextResponse.json(
                 { error: 'A user with this email already exists', success: false },
                 { status: 400 }
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
             RETURNING id, name, email, role, created_at
         `;
 
-        const result = await pool.query(insertQuery, [
+        const result = await executeQuery<any[]>(insertQuery, [
             name,
             email,
             password_hash,
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
         ]);
 
         return NextResponse.json({
-            user: result.rows[0],
+            user: result[0],
             success: true
         });
     } catch (error) {

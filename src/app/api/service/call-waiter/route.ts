@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function POST(request: Request) {
     try {
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
         }
 
         // Insert the request into the database
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `INSERT INTO waiter_calls (
         table_id, 
         reason, 
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json({
             success: true,
-            requestId: result.rows[0].id,
+            requestId: result[0].id,
             message: 'Waiter call request received'
         });
     } catch (error: any) {

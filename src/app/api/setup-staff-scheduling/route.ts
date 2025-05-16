@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
@@ -45,12 +45,12 @@ export async function POST(request: NextRequest) {
                 // Get staff members for sample shifts
                 const staffResult = await client.query('SELECT id FROM staff LIMIT 3');
 
-                if (staffResult.rows.length > 0) {
+                if (staffResult.length > 0) {
                     // Create sample shifts for the next 7 days
                     const today = new Date();
 
-                    for (let i = 0; i < staffResult.rows.length; i++) {
-                        const staffId = staffResult.rows[i].id;
+                    for (let i = 0; i < staffResult.length; i++) {
+                        const staffId = staffResult[i].id;
 
                         for (let day = 0; day < 7; day++) {
                             const shiftDate = new Date(today);

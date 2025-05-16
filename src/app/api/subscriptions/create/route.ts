@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
     try {
@@ -21,12 +21,12 @@ export async function POST(request: NextRequest) {
         }
 
         // Check if user exists
-        const userResult = await pool.query(
+        const userResult = await executeQuery<any[]>(
             'SELECT * FROM users WHERE id = $1',
             [userId]
         );
 
-        if (userResult.rows.length === 0) {
+        if (userResult.length === 0) {
             return NextResponse.json(
                 { error: 'User not found' },
                 { status: 404 }
@@ -48,8 +48,8 @@ export async function POST(request: NextRequest) {
                 [formattedPlanName]
             );
 
-            if (planResult.rows.length > 0) {
-                actualPlanId = planResult.rows[0].id;
+            if (planResult.length > 0) {
+                actualPlanId = planResult[0].id;
             }
         } else {
             // If it's already a numeric ID, use it directly
@@ -58,12 +58,12 @@ export async function POST(request: NextRequest) {
                 [planId]
             );
 
-            if (planResult.rows.length > 0) {
+            if (planResult.length > 0) {
                 actualPlanId = planId;
             }
         }
 
-        if (!actualPlanId || planResult.rows.length === 0) {
+        if (!actualPlanId || planResult.length === 0) {
             return NextResponse.json(
                 { error: 'Subscription plan not found' },
                 { status: 404 }
@@ -71,12 +71,12 @@ export async function POST(request: NextRequest) {
         }
 
         // Check if the user already has an active subscription for this plan
-        const existingSubscriptionResult = await pool.query(
+        const existingSubscriptionResult = await executeQuery<any[]>(
             'SELECT * FROM subscriptions WHERE user_id = $1 AND plan_id = $2 AND status = $3',
             [userId, actualPlanId, 'active']
         );
 
-        if (existingSubscriptionResult.rows.length > 0) {
+        if (existingSubscriptionResult.length > 0) {
             return NextResponse.json(
                 { error: 'User already has an active subscription for this plan' },
                 { status: 400 }
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Create a new subscription record
-        const insertResult = await pool.query(
+        const insertResult = await executeQuery<any[]>(
             `INSERT INTO subscriptions 
              (user_id, plan_id, status, start_date, next_billing_date)
              VALUES ($1, $2, $3, NOW(), NOW() + interval '1 month')
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
             [userId, actualPlanId, 'active']
         );
 
-        const subscriptionId = insertResult.rows[0].id;
+        const subscriptionId = insertResult[0].id;
 
         return NextResponse.json({
             message: 'Subscription created successfully',

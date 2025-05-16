@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
-import { pool } from '@/lib/db';
+import { getConnectionPool } from '@/lib/db';
 import { convertNumericStrings, processCartItem } from '@/utils/dataConverter';
 
 // GET - Retrieve a cart by session ID
@@ -15,6 +15,8 @@ export async function GET(req: NextRequest) {
                 { status: 400 }
             );
         }
+
+        const pool = getConnectionPool();
 
         // Check if cart exists
         const cartResult = await pool.query(
@@ -88,6 +90,8 @@ export async function POST(req: NextRequest) {
                 { status: 400 }
             );
         }
+
+        const pool = getConnectionPool();
 
         // Begin transaction
         const client = await pool.connect();
@@ -185,6 +189,8 @@ export async function DELETE(req: NextRequest) {
                 { status: 400 }
             );
         }
+
+        const pool = getConnectionPool();
 
         // Check if cart exists
         const cartResult = await pool.query(

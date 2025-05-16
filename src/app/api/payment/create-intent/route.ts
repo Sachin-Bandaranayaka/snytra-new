@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
     try {

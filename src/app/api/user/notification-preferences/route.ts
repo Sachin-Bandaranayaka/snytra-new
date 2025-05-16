@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
@@ -18,12 +18,12 @@ export async function GET(request: NextRequest) {
         const userId = session.user.id;
 
         // Check if the user has notification preferences
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             'SELECT preferences FROM user_notification_preferences WHERE user_id = $1',
             [userId]
         );
 
-        if (result.rowCount === 0) {
+        if (result.length === 0) {
             // Return default preferences if not found
             return NextResponse.json({
                 preferences: {
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
             });
         }
 
-        return NextResponse.json({ preferences: result.rows[0].preferences });
+        return NextResponse.json({ preferences: result[0].preferences });
     } catch (error) {
         console.error('Error fetching notification preferences:', error);
         return NextResponse.json(
@@ -75,12 +75,12 @@ export async function POST(request: NextRequest) {
         }
 
         // Check if the user already has preferences
-        const checkResult = await pool.query(
+        const checkResult = await executeQuery<any[]>(
             'SELECT id FROM user_notification_preferences WHERE user_id = $1',
             [userId]
         );
 
-        if (checkResult.rowCount === 0) {
+        if (checkResult.length === 0) {
             // Insert new preferences
             await pool.query(
                 'INSERT INTO user_notification_preferences (user_id, preferences) VALUES ($1, $2)',

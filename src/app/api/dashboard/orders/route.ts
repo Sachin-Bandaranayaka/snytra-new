@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
     try {
         // Fetch orders with item counts
-        const ordersQuery = await pool.query(`
+        const ordersQuery = await executeQuery<any[]>(`
       SELECT o.id, o.customer_name, o.customer_email, o.status, o.total_amount, 
              COALESCE(o.payment_status, 'pending') as payment_status, o.created_at,
              COUNT(oi.id) as items_count
@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     `);
 
         return NextResponse.json({
-            orders: ordersQuery.rows,
+            orders: ordersQuery,
             success: true
         });
     } catch (error: any) {

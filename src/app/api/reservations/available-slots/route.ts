@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
     try {
@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
         }
 
         // Get existing reservations for this date to determine availability
-        const reservationsResult = await pool.query(
+        const reservationsResult = await executeQuery<any[]>(
             `SELECT time, COUNT(*) as count 
              FROM reservations 
              WHERE date = $1 AND status = 'confirmed'
@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
         );
 
         // Calculate availability based on existing reservations
-        for (const reservation of reservationsResult.rows) {
+        for (const reservation of reservationsResult) {
             const slot = slots.find(s => s.time === reservation.time);
             if (slot) {
                 slot.available = Math.max(0, slot.available - parseInt(reservation.count));

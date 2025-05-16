@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function GET(request: NextRequest, props: { params: Promise<{ userId: string }> }) {
     const params = await props.params;
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest, props: { params: Promise<{ userI
 
     try {
         // Get user with subscription information
-        const userResult = await pool.query(
+        const userRows = await executeQuery<any[]>(
             `SELECT 
         u.id,
         u.name,
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest, props: { params: Promise<{ userI
             [userId]
         );
 
-        if (userResult.rows.length === 0) {
+        if (userRows.length === 0) {
             return NextResponse.json(
                 { error: 'User not found' },
                 { status: 404 }
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest, props: { params: Promise<{ userI
         }
 
         // Get payment history
-        const paymentsResult = await pool.query(
+        const paymentRows = await executeQuery<any[]>(
             `SELECT 
         id,
         amount,
@@ -61,8 +61,8 @@ export async function GET(request: NextRequest, props: { params: Promise<{ userI
         );
 
         return NextResponse.json({
-            user: userResult.rows[0],
-            payments: paymentsResult.rows
+            user: userRows[0],
+            payments: paymentRows
         });
     } catch (error) {
         console.error('Error fetching user subscription data:', error);

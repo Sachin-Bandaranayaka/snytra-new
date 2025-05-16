@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import { compare } from 'bcrypt';
 
 export async function POST(request: NextRequest) {
@@ -14,19 +14,19 @@ export async function POST(request: NextRequest) {
         }
 
         // Query the database for the staff member with the provided email
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             'SELECT * FROM staff WHERE email = $1',
             [email.toLowerCase()]
         );
 
-        if (result.rows.length === 0) {
+        if (result.length === 0) {
             return NextResponse.json(
                 { error: 'Invalid email or password' },
                 { status: 401 }
             );
         }
 
-        const staff = result.rows[0];
+        const staff = result[0];
 
         // Check if password matches using bcrypt
         const passwordMatch = await compare(password, staff.password_hash);
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Get restaurant information
-        const restaurantResult = await pool.query(
+        const restaurantResult = await executeQuery<any[]>(
             'SELECT name FROM restaurants WHERE id = $1',
             [staff.restaurant_id]
         );
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
             message: 'Login successful',
             staff: {
                 ...staffWithoutSensitiveData,
-                restaurant_name: restaurantResult.rows.length > 0 ? restaurantResult.rows[0].name : null
+                restaurant_name: restaurantResult.length > 0 ? restaurantResult[0].name : null
             }
         });
     } catch (error) {

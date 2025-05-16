@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
     try {
@@ -32,12 +32,12 @@ export async function POST(request: NextRequest) {
         // Update the order status to 'paid'
         console.log('Updating order status to paid');
         try {
-            const result = await pool.query(
+            const result = await executeQuery<any[]>(
                 `UPDATE orders SET payment_status = 'paid', status = 'confirmed' WHERE id = $1 RETURNING *`,
                 [orderId]
             );
 
-            if (result.rowCount === 0) {
+            if (result.length === 0) {
                 console.error('Order not found for payment verification:', orderId);
                 return NextResponse.json(
                     { error: 'Order not found' },
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({
                 success: true,
                 message: 'Payment verified and order updated successfully',
-                order: result.rows[0]
+                order: result[0]
             });
         } catch (dbError) {
             console.error('Database error while updating order:', dbError);

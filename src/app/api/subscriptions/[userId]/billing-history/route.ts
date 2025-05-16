@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import Stripe from 'stripe';
 
 // Initialize Stripe
@@ -16,7 +16,7 @@ export async function GET(
         const { userId } = await params;
 
         // First, get the user's stripe customer ID
-        const { rows } = await pool.query(
+        const rows = await executeQuery<{ stripe_customer_id: string }[]>(
             `SELECT stripe_customer_id FROM users WHERE id = $1`,
             [userId]
         );
@@ -72,4 +72,4 @@ export async function GET(
             { status: 500 }
         );
     }
-} 
+}

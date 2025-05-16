@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { verifyFeatureAccess } from '@/lib/subscription-utils';
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
         }
 
         // Get the user ID from the database
-        const { rows } = await pool.query(
+        const rows = await executeQuery<any[]>(
             `SELECT id, role, subscription_plan, subscription_status FROM users WHERE email = $1`,
             [session.user.email]
         );

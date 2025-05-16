@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
   try {
     // Fetch restaurants
-    const restaurantsQuery = await pool.query(`
+    const restaurantsQuery = await executeQuery<any[]>(`
       SELECT id, name, description, address 
       FROM restaurants 
       ORDER BY name ASC
     `);
 
     // Fetch recent orders
-    const ordersQuery = await pool.query(`
+    const ordersQuery = await executeQuery<any[]>(`
       SELECT id, customer_name, status, total_amount, created_at 
       FROM orders 
       ORDER BY created_at DESC 
@@ -19,32 +19,32 @@ export async function GET(req: NextRequest) {
     `);
 
     // Fetch summary stats
-    const totalOrdersQuery = await pool.query(`
+    const totalOrdersQuery = await executeQuery<any[]>(`
       SELECT COUNT(*) as count FROM orders
     `);
 
-    const totalRevenueQuery = await pool.query(`
+    const totalRevenueQuery = await executeQuery<any[]>(`
       SELECT SUM(total_amount) as sum FROM orders WHERE status != 'cancelled'
     `);
 
-    const totalCustomersQuery = await pool.query(`
+    const totalCustomersQuery = await executeQuery<any[]>(`
       SELECT COUNT(DISTINCT customer_email) as count FROM orders WHERE customer_email IS NOT NULL
     `);
 
     // Get pending orders count
-    const pendingOrdersQuery = await pool.query(`
+    const pendingOrdersQuery = await executeQuery<any[]>(`
       SELECT COUNT(*) as count FROM orders WHERE status = 'pending'
     `);
 
     // Get orders from this week
-    const ordersThisWeekQuery = await pool.query(`
+    const ordersThisWeekQuery = await executeQuery<any[]>(`
       SELECT COUNT(*) as count 
       FROM orders 
       WHERE created_at >= DATE_TRUNC('week', CURRENT_DATE)
     `);
 
     // Get orders from previous week
-    const previousWeekOrdersQuery = await pool.query(`
+    const previousWeekOrdersQuery = await executeQuery<any[]>(`
       SELECT COUNT(*) as count 
       FROM orders 
       WHERE created_at >= DATE_TRUNC('week', CURRENT_DATE - INTERVAL '1 week')
@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
     `);
 
     // Get revenue from this week
-    const revenueThisWeekQuery = await pool.query(`
+    const revenueThisWeekQuery = await executeQuery<any[]>(`
       SELECT COALESCE(SUM(total_amount), 0) as sum 
       FROM orders 
       WHERE created_at >= DATE_TRUNC('week', CURRENT_DATE)
@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
     `);
 
     // Get revenue from previous week
-    const previousWeekRevenueQuery = await pool.query(`
+    const previousWeekRevenueQuery = await executeQuery<any[]>(`
       SELECT COALESCE(SUM(total_amount), 0) as sum 
       FROM orders 
       WHERE created_at >= DATE_TRUNC('week', CURRENT_DATE - INTERVAL '1 week')
@@ -69,17 +69,17 @@ export async function GET(req: NextRequest) {
     `);
 
     return NextResponse.json({
-      restaurants: restaurantsQuery.rows,
-      recentOrders: ordersQuery.rows,
+      restaurants: restaurantsQuery,
+      recentOrders: ordersQuery,
       stats: {
-        totalOrders: Number(totalOrdersQuery.rows[0]?.count) || 0,
-        totalRevenue: Number(totalRevenueQuery.rows[0]?.sum) || 0,
-        totalCustomers: Number(totalCustomersQuery.rows[0]?.count) || 0,
-        pendingOrders: Number(pendingOrdersQuery.rows[0]?.count) || 0,
-        ordersThisWeek: Number(ordersThisWeekQuery.rows[0]?.count) || 0,
-        previousWeekOrders: Number(previousWeekOrdersQuery.rows[0]?.count) || 0,
-        revenueThisWeek: Number(revenueThisWeekQuery.rows[0]?.sum) || 0,
-        previousWeekRevenue: Number(previousWeekRevenueQuery.rows[0]?.sum) || 0
+        totalOrders: Number(totalOrdersQuery[0]?.count) || 0,
+        totalRevenue: Number(totalRevenueQuery[0]?.sum) || 0,
+        totalCustomers: Number(totalCustomersQuery[0]?.count) || 0,
+        pendingOrders: Number(pendingOrdersQuery[0]?.count) || 0,
+        ordersThisWeek: Number(ordersThisWeekQuery[0]?.count) || 0,
+        previousWeekOrders: Number(previousWeekOrdersQuery[0]?.count) || 0,
+        revenueThisWeek: Number(revenueThisWeekQuery[0]?.sum) || 0,
+        previousWeekRevenue: Number(previousWeekRevenueQuery[0]?.sum) || 0
       },
       success: true
     });

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 // GET endpoint to retrieve all waitlist entries
 export async function GET(req: NextRequest) {
     try {
-        const waitlistResult = await pool.query(`
+        const waitlistResult = await executeQuery<any[]>(`
             SELECT 
                 id, 
                 name, 
@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
         `);
 
         return NextResponse.json({
-            waitlist: waitlistResult.rows,
+            waitlist: waitlistResult,
             success: true
         });
     } catch (error: any) {
@@ -44,22 +44,22 @@ export async function POST(req: NextRequest) {
         }
 
         // Get the waitlist entry first
-        const waitlistEntry = await pool.query(
+        const waitlistEntry = await executeQuery<any[]>(
             'SELECT * FROM waitlist WHERE id = $1',
             [id]
         );
 
-        if (waitlistEntry.rows.length === 0) {
+        if (waitlistEntry.length === 0) {
             return NextResponse.json(
                 { error: 'Waitlist entry not found', success: false },
                 { status: 404 }
             );
         }
 
-        const entry = waitlistEntry.rows[0];
+        const entry = waitlistEntry[0];
 
         // Create a new reservation from the waitlist entry
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `INSERT INTO reservations 
              (name, phone_number, date, time, party_size, table_id, status) 
              VALUES ($1, $2, $3, $4, $5, $6, $7) 
@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
         await pool.query('DELETE FROM waitlist WHERE id = $1', [id]);
 
         return NextResponse.json({
-            reservation: result.rows[0],
+            reservation: result[0],
             success: true,
             message: 'Waitlist entry converted to reservation successfully'
         });
@@ -114,9 +114,9 @@ export async function DELETE(req: NextRequest) {
         }
 
         // Delete the waitlist entry
-        const result = await pool.query('DELETE FROM waitlist WHERE id = $1', [id]);
+        const result = await executeQuery<any[]>('DELETE FROM waitlist WHERE id = $1', [id]);
 
-        if (result.rowCount === 0) {
+        if (result.length === 0) {
             return NextResponse.json(
                 { error: 'Waitlist entry not found', success: false },
                 { status: 404 }

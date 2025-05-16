@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import { v4 as uuidv4 } from 'uuid';
 import { Cart } from '@/components/providers/CartProvider';
 
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
                 ]
             );
 
-            const orderId = orderResult.rows[0].id;
+            const orderId = orderResult[0].id;
 
             // Insert order items
             for (const item of cart.items) {
@@ -132,22 +132,22 @@ export async function GET(request: NextRequest) {
 
         if (orderId) {
             // Get specific order
-            const orderResult = await pool.query(
+            const orderResult = await executeQuery<any[]>(
                 `SELECT * FROM orders WHERE id = $1`,
                 [orderId]
             );
 
-            if (orderResult.rows.length === 0) {
+            if (orderResult.length === 0) {
                 return NextResponse.json(
                     { error: 'Order not found' },
                     { status: 404 }
                 );
             }
 
-            const order = orderResult.rows[0];
+            const order = orderResult[0];
 
             // Get order items
-            const itemsResult = await pool.query(
+            const itemsResult = await executeQuery<any[]>(
                 `SELECT * FROM order_items WHERE order_id = $1`,
                 [orderId]
             );
@@ -165,7 +165,7 @@ export async function GET(request: NextRequest) {
                     specialInstructions: order.special_instructions,
                     createdAt: order.created_at,
                     updatedAt: order.updated_at,
-                    items: itemsResult.rows.map(item => ({
+                    items: itemsResult.map(item => ({
                         id: item.id,
                         menuItemId: item.menu_item_id,
                         menuItemName: item.menu_item_name,
@@ -182,16 +182,16 @@ export async function GET(request: NextRequest) {
             const limit = parseInt(searchParams.get('limit') || '10');
             const offset = (page - 1) * limit;
 
-            const ordersResult = await pool.query(
+            const ordersResult = await executeQuery<any[]>(
                 `SELECT * FROM orders ORDER BY created_at DESC LIMIT $1 OFFSET $2`,
                 [limit, offset]
             );
 
-            const countResult = await pool.query(`SELECT COUNT(*) FROM orders`);
-            const totalOrders = parseInt(countResult.rows[0].count);
+            const countResult = await executeQuery<any[]>(`SELECT COUNT(*) FROM orders`);
+            const totalOrders = parseInt(countResult[0].count);
 
             return NextResponse.json({
-                orders: ordersResult.rows.map(order => ({
+                orders: ordersResult.map(order => ({
                     id: order.id,
                     customerName: order.customer_name,
                     status: order.status,

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 // GET endpoint to retrieve all reservations and waitlist entries
 export async function GET(req: NextRequest) {
@@ -62,11 +62,11 @@ export async function GET(req: NextRequest) {
         console.log('Executing query:', query, 'with params:', params);
         query += ` ORDER BY r.date DESC, r.time ASC`;
 
-        const reservationsResult = await pool.query(query, params);
-        console.log('Reservations found:', reservationsResult.rows.length);
+        const reservationsResult = await executeQuery<any[]>(query, params);
+        console.log('Reservations found:', reservationsResult.length);
 
         // Also get waitlist entries
-        const waitlistResult = await pool.query(`
+        const waitlistResult = await executeQuery<any[]>(`
             SELECT 
                 id, 
                 name, 
@@ -80,7 +80,7 @@ export async function GET(req: NextRequest) {
         `);
 
         // Get all available tables for assigning to reservations
-        const tablesResult = await pool.query(`
+        const tablesResult = await executeQuery<any[]>(`
             SELECT 
                 id, 
                 table_number, 
@@ -96,9 +96,9 @@ export async function GET(req: NextRequest) {
         `);
 
         return NextResponse.json({
-            reservations: reservationsResult.rows,
-            waitlist: waitlistResult.rows,
-            available_tables: tablesResult.rows,
+            reservations: reservationsResult,
+            waitlist: waitlistResult,
+            available_tables: tablesResult,
             success: true
         });
     } catch (error: any) {
@@ -124,22 +124,22 @@ export async function PUT(req: NextRequest) {
         }
 
         // Get the current reservation to check if there's a table change
-        const currentReservation = await pool.query(
+        const currentReservation = await executeQuery<any[]>(
             'SELECT table_id FROM reservations WHERE id = $1',
             [id]
         );
 
-        if (currentReservation.rows.length === 0) {
+        if (currentReservation.length === 0) {
             return NextResponse.json(
                 { error: 'Reservation not found', success: false },
                 { status: 404 }
             );
         }
 
-        const oldTableId = currentReservation.rows[0].table_id;
+        const oldTableId = currentReservation[0].table_id;
 
         // Update the reservation
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `UPDATE reservations 
              SET status = $1, table_id = $2, updated_at = NOW() 
              WHERE id = $3 
@@ -147,7 +147,7 @@ export async function PUT(req: NextRequest) {
             [status, table_id || null, id]
         );
 
-        if (result.rowCount === 0) {
+        if (result.length === 0) {
             return NextResponse.json(
                 { error: 'Reservation not found', success: false },
                 { status: 404 }
@@ -171,7 +171,7 @@ export async function PUT(req: NextRequest) {
         }
 
         // Get the updated reservation with table information
-        const updatedReservation = await pool.query(
+        const updatedReservation = await executeQuery<any[]>(
             `SELECT 
                 r.*, 
                 t.table_number, 
@@ -187,7 +187,7 @@ export async function PUT(req: NextRequest) {
         );
 
         return NextResponse.json({
-            reservation: updatedReservation.rows[0],
+            reservation: updatedReservation[0],
             success: true,
             message: `Reservation ${status === 'confirmed' ? 'confirmed' : 'updated'} successfully`
         });
@@ -214,19 +214,19 @@ export async function DELETE(req: NextRequest) {
         }
 
         // Get the reservation first to check if it has a table assigned
-        const checkReservation = await pool.query(
+        const checkReservation = await executeQuery<any[]>(
             'SELECT table_id FROM reservations WHERE id = $1',
             [id]
         );
 
-        if (checkReservation.rows.length === 0) {
+        if (checkReservation.length === 0) {
             return NextResponse.json(
                 { error: 'Reservation not found', success: false },
                 { status: 404 }
             );
         }
 
-        const tableId = checkReservation.rows[0].table_id;
+        const tableId = checkReservation[0].table_id;
 
         // Delete the reservation
         await pool.query('DELETE FROM reservations WHERE id = $1', [id]);

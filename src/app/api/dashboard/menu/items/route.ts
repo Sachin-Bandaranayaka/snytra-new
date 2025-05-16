@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function GET() {
     try {
         // Fetch all menu items
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             'SELECT id, name, description, price, category_id, image_url, is_available FROM menu_items ORDER BY name ASC'
         );
 
         return NextResponse.json({
-            menuItems: result.rows,
+            menuItems: result,
             success: true
         });
     } catch (error: any) {
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Insert new menu item
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `INSERT INTO menu_items 
             (name, description, price, category_id, image_url, is_available) 
             VALUES ($1, $2, $3, $4, $5, $6) 
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
         );
 
         return NextResponse.json({
-            menuItem: result.rows[0],
+            menuItem: result[0],
             success: true
         });
     } catch (error: any) {

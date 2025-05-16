@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 
@@ -72,10 +72,10 @@ export async function GET(request: NextRequest) {
         query += ` ORDER BY date, time, created_at`;
 
         // Execute query
-        const result = await pool.query(query, queryParams);
+        const result = await executeQuery<any[]>(query, queryParams);
 
         // Format response
-        const waitlist = result.rows.map(row => ({
+        const waitlist = result.map(row => ({
             id: row.id,
             customerName: row.name,
             customerEmail: row.customer_email,
@@ -153,12 +153,12 @@ export async function POST(request: NextRequest) {
         const dayOfWeek = waitlistDateTime.getDay();
 
         // Check if reservations are allowed for this day
-        const settingsResult = await pool.query(
+        const settingsResult = await executeQuery<any[]>(
             'SELECT * FROM reservation_settings WHERE day_of_week = $1 AND is_active = true',
             [dayOfWeek]
         );
 
-        if (settingsResult.rows.length === 0) {
+        if (settingsResult.length === 0) {
             return NextResponse.json(
                 { error: 'Reservations are not available for this day' },
                 { status: 400 }
@@ -166,7 +166,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Check if the time is within restaurant hours
-        const settings = settingsResult.rows[0];
+        const settings = settingsResult[0];
         const openTime = new Date(`${date}T${settings.open_time}`);
         const closeTime = new Date(`${date}T${settings.close_time}`);
 
@@ -178,20 +178,20 @@ export async function POST(request: NextRequest) {
         }
 
         // Check if there are already people on the waitlist for this time slot
-        const waitlistCountResult = await pool.query(
+        const waitlistCountResult = await executeQuery<any[]>(
             `SELECT COUNT(*) as count 
              FROM waitlist 
              WHERE date = $1 AND time = $2 AND status = 'waiting'`,
             [date, time]
         );
 
-        const waitlistCount = parseInt(waitlistCountResult.rows[0].count);
+        const waitlistCount = parseInt(waitlistCountResult[0].count);
 
         // Calculate estimated wait time (15 minutes per 2 parties ahead)
         const estimatedWaitTime = Math.ceil(waitlistCount / 2) * 15;
 
         // Insert into waitlist
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `INSERT INTO waitlist
              (name, customer_email, phone_number, party_size, date, time, special_requests, status, estimated_wait_time)
              VALUES ($1, $2, $3, $4, $5, $6, $7, 'waiting', $8)
@@ -199,7 +199,7 @@ export async function POST(request: NextRequest) {
             [customerName, customerEmail, customerPhone, partySize, date, time, specialRequests, estimatedWaitTime]
         );
 
-        const newWaitlistEntry = result.rows[0];
+        const newWaitlistEntry = result[0];
 
         return NextResponse.json({
             message: 'Added to waitlist successfully',
@@ -248,12 +248,12 @@ export async function PATCH(request: NextRequest) {
         }
 
         // Update status
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `UPDATE waitlist SET status = $1 WHERE id = $2 RETURNING *`,
             [status, id]
         );
 
-        if (result.rowCount === 0) {
+        if (result.length === 0) {
             return NextResponse.json(
                 { error: 'Waitlist entry not found' },
                 { status: 404 }
@@ -262,7 +262,7 @@ export async function PATCH(request: NextRequest) {
 
         return NextResponse.json({
             success: true,
-            waitlist: result.rows[0],
+            waitlist: result[0],
             message: 'Waitlist status updated successfully'
         });
     } catch (error) {
@@ -288,12 +288,12 @@ export async function DELETE(request: NextRequest) {
         }
 
         // Delete from waitlist
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `DELETE FROM waitlist WHERE id = $1 RETURNING id`,
             [id]
         );
 
-        if (result.rowCount === 0) {
+        if (result.length === 0) {
             return NextResponse.json(
                 { error: 'Waitlist entry not found' },
                 { status: 404 }

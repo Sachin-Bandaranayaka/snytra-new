@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
@@ -43,22 +43,22 @@ export async function POST(
         }
 
         // First, get the waitlist entry to check if it exists
-        const entryResult = await pool.query(
+        const entryResult = await executeQuery<any[]>(
             'SELECT * FROM waitlist WHERE id = $1 AND status = $2',
             [waitlistId, 'waiting']
         );
 
-        if (entryResult.rowCount === 0) {
+        if (entryResult.length === 0) {
             return NextResponse.json(
                 { error: 'Waitlist entry not found or not in waiting status' },
                 { status: 404 }
             );
         }
 
-        const waitlistEntry = entryResult.rows[0];
+        const waitlistEntry = entryResult[0];
 
         // Get the waitlist position
-        const positionResult = await pool.query(
+        const positionResult = await executeQuery<any[]>(
             `SELECT COUNT(*) as position 
              FROM waitlist
              WHERE date = $1 
@@ -68,16 +68,16 @@ export async function POST(
             [waitlistEntry.date, waitlistEntry.time, waitlistId]
         );
 
-        const position = parseInt(positionResult.rows[0].position) + 1;
+        const position = parseInt(positionResult[0].position) + 1;
 
         // Get the message template
-        const templateResult = await pool.query(
+        const templateResult = await executeQuery<any[]>(
             'SELECT * FROM message_templates WHERE name = $1 AND channel = $2',
             ['waitlist_notification', 'whatsapp']
         );
 
         // Update the waitlist entry to mark as notified
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             'UPDATE waitlist SET notified = true WHERE id = $1 RETURNING *',
             [waitlistId]
         );
@@ -102,8 +102,8 @@ export async function POST(
 
         // Prepare for WhatsApp notification
         let whatsappResult = null;
-        if (templateResult.rowCount > 0) {
-            const template = templateResult.rows[0];
+        if (templateResult.length > 0) {
+            const template = templateResult[0];
             // Format the phone number (remove dashes, spaces, etc.)
             const formattedPhone = waitlistEntry.phone_number.replace(/\D/g, '');
 
@@ -144,7 +144,7 @@ export async function POST(
         return NextResponse.json({
             success: true,
             message: 'Customer has been notified',
-            waitlist: result.rows[0],
+            waitlist: result[0],
             notification: {
                 method: 'whatsapp',
                 status: whatsappResult?.success ? 'sent' : 'prepared',

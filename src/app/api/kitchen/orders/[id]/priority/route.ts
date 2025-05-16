@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function PUT(request: NextRequest, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
@@ -33,14 +33,14 @@ export async function PUT(request: NextRequest, props: { params: Promise<{ id: s
         }
 
         // First, check if the priority column exists
-        const checkColumnResult = await pool.query(`
+        const checkColumnResult = await executeQuery<any[]>(`
             SELECT column_name 
             FROM information_schema.columns 
             WHERE table_name = 'orders' AND column_name = 'priority'
         `);
 
         // If the column doesn't exist, let's create it
-        if (checkColumnResult.rowCount === 0) {
+        if (checkColumnResult.length === 0) {
             await pool.query(`
                 ALTER TABLE orders 
                 ADD COLUMN priority VARCHAR(10) DEFAULT 'normal'
@@ -48,19 +48,19 @@ export async function PUT(request: NextRequest, props: { params: Promise<{ id: s
         }
 
         // Update order priority in the database
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             'UPDATE orders SET priority = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
             [priority, orderId]
         );
 
-        if (result.rowCount === 0) {
+        if (result.length === 0) {
             return NextResponse.json(
                 { success: false, error: 'Order not found' },
                 { status: 404 }
             );
         }
 
-        const updatedOrder = result.rows[0];
+        const updatedOrder = result[0];
 
         return NextResponse.json({
             success: true,

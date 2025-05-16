@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
     try {
         // Check if the tables table exists
-        const tableExists = await pool.query(`
+        const tableExists = await executeQuery<any[]>(`
             SELECT EXISTS (
                 SELECT FROM information_schema.tables 
                 WHERE table_name = 'tables'
@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
         `);
 
         // If the table doesn't exist, create it
-        if (!tableExists.rows[0].table_exists) {
+        if (!tableExists[0].table_exists) {
             await pool.query(`
                 CREATE TABLE tables (
                     id SERIAL PRIMARY KEY,
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
         }
 
         // Fetch tables with reservation information
-        const tablesQuery = await pool.query(`
+        const tablesQuery = await executeQuery<any[]>(`
             SELECT 
                 t.id, 
                 t.table_number, 
@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
         `);
 
         // Add placeholder QR code for any tables that don't have one
-        const tablesWithQR = tablesQuery.rows.map(table => {
+        const tablesWithQR = tablesQuery.map(table => {
             if (!table.qr_code_url) {
                 return {
                     ...table,
@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
 
         // Get all upcoming reservations
         const currentDate = new Date().toISOString().split('T')[0];
-        const reservationsQuery = await pool.query(`
+        const reservationsQuery = await executeQuery<any[]>(`
             SELECT 
                 r.id, 
                 r.name, 
@@ -83,7 +83,7 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json({
             tables: tablesWithQR,
-            reservations: reservationsQuery.rows,
+            reservations: reservationsQuery,
             success: true
         });
     } catch (error: any) {
@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Check if the tables table exists
-        const tableExists = await pool.query(`
+        const tableExists = await executeQuery<any[]>(`
             SELECT EXISTS (
                 SELECT FROM information_schema.tables 
                 WHERE table_name = 'tables'
@@ -123,7 +123,7 @@ export async function POST(req: NextRequest) {
         `);
 
         // If the table doesn't exist, create it
-        if (!tableExists.rows[0].table_exists) {
+        if (!tableExists[0].table_exists) {
             await pool.query(`
                 CREATE TABLE tables (
                     id SERIAL PRIMARY KEY,
@@ -137,12 +137,12 @@ export async function POST(req: NextRequest) {
         }
 
         // Check if table with the same number already exists
-        const existingTable = await pool.query(
+        const existingTable = await executeQuery<any[]>(
             'SELECT * FROM tables WHERE table_number = $1',
             [table_number]
         );
 
-        if (existingTable.rows.length > 0) {
+        if (existingTable.length > 0) {
             return NextResponse.json(
                 { error: 'A table with this number already exists', success: false },
                 { status: 409 }
@@ -153,13 +153,13 @@ export async function POST(req: NextRequest) {
         const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`https://your-restaurant-domain.com/menu?table=${table_number}`)}`;
 
         // First, check the schema of the tables table
-        const tableSchema = await pool.query(`
+        const tableSchema = await executeQuery<any[]>(`
             SELECT column_name 
             FROM information_schema.columns 
             WHERE table_name = 'tables'
         `);
 
-        const columns = tableSchema.rows.map(row => row.column_name);
+        const columns = tableSchema.map(row => row.column_name);
 
         // Determine if restaurant_id column exists
         let query;
@@ -180,9 +180,9 @@ export async function POST(req: NextRequest) {
         }
 
         // Insert the new table
-        const result = await pool.query(query, params);
+        const result = await executeQuery<any[]>(query, params);
 
-        const newTable = result.rows[0];
+        const newTable = result[0];
 
         return NextResponse.json({
             table: newTable,
@@ -209,12 +209,12 @@ export async function PUT(req: NextRequest) {
         }
 
         // Check if table exists
-        const existingTable = await pool.query(
+        const existingTable = await executeQuery<any[]>(
             'SELECT * FROM tables WHERE id = $1',
             [id]
         );
 
-        if (existingTable.rows.length === 0) {
+        if (existingTable.length === 0) {
             return NextResponse.json(
                 { error: 'Table not found', success: false },
                 { status: 404 }
@@ -254,13 +254,13 @@ export async function PUT(req: NextRequest) {
         }
 
         // Update the table
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `UPDATE tables SET ${updateFields.join(', ')} WHERE id = $1 RETURNING *`,
             params
         );
 
         return NextResponse.json({
-            table: result.rows[0],
+            table: result[0],
             success: true
         });
     } catch (error: any) {
@@ -285,12 +285,12 @@ export async function DELETE(req: NextRequest) {
         }
 
         // Check if table exists
-        const existingTable = await pool.query(
+        const existingTable = await executeQuery<any[]>(
             'SELECT * FROM tables WHERE id = $1',
             [id]
         );
 
-        if (existingTable.rows.length === 0) {
+        if (existingTable.length === 0) {
             return NextResponse.json(
                 { error: 'Table not found', success: false },
                 { status: 404 }
@@ -298,12 +298,12 @@ export async function DELETE(req: NextRequest) {
         }
 
         // Check if table has any reservations
-        const reservations = await pool.query(
+        const reservations = await executeQuery<any[]>(
             'SELECT COUNT(*) FROM reservations WHERE table_id = $1 AND status = $2',
             [id, 'confirmed']
         );
 
-        if (parseInt(reservations.rows[0].count) > 0) {
+        if (parseInt(reservations[0].count) > 0) {
             return NextResponse.json(
                 { error: 'Cannot delete table with active reservations', success: false },
                 { status: 400 }

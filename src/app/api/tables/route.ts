@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
@@ -50,10 +50,10 @@ export async function GET(request: NextRequest) {
         query += ` ORDER BY t.table_number`;
 
         // Execute query
-        const result = await pool.query(query, queryParams);
+        const result = await executeQuery<any[]>(query, queryParams);
 
         // Format response with current order and reservation details
-        const tables = result.rows.map(row => {
+        const tables = result.map(row => {
             const table = {
                 id: row.id,
                 tableNumber: row.table_number,
@@ -107,12 +107,12 @@ export async function POST(request: NextRequest) {
         }
 
         // Check if table number already exists
-        const existingTable = await pool.query(
+        const existingTable = await executeQuery<any[]>(
             'SELECT id FROM tables WHERE table_number = $1',
             [tableNumber]
         );
 
-        if (existingTable.rows.length > 0) {
+        if (existingTable.length > 0) {
             return NextResponse.json(
                 { error: 'A table with this number already exists' },
                 { status: 400 }
@@ -120,14 +120,14 @@ export async function POST(request: NextRequest) {
         }
 
         // Create new table
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `INSERT INTO tables (table_number, capacity, status, location) 
        VALUES ($1, $2, $3, $4) 
        RETURNING id, table_number, capacity, status, location`,
             [tableNumber, capacity, status || 'available', location || null]
         );
 
-        const table = result.rows[0];
+        const table = result[0];
 
         return NextResponse.json({
             message: 'Table created successfully',

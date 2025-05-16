@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 
         // Test database connection
         try {
-            const { rows } = await pool.query('SELECT NOW() as time');
+            const rows = await executeQuery<any[]>('SELECT NOW() as time');
             results.database = {
                 status: 'success',
                 message: `Connected to database. Server time: ${rows[0].time}`,

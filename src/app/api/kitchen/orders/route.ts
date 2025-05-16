@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function GET() {
     try {
         // Get orders with their items
-        const result = await pool.query(`
+        const result = await executeQuery<any[]>(`
       SELECT o.id, o.customer_name, o.status, o.total_amount, 
              o.created_at, o.updated_at, o.special_instructions,
              o.preparation_time_minutes, o.priority,
@@ -29,10 +29,10 @@ export async function GET() {
         o.created_at DESC
     `);
 
-        const orders = result.rows;
+        const orders = result;
 
         // Get order items for all orders
-        const itemsResult = await pool.query(`
+        const itemsResult = await executeQuery<any[]>(`
       SELECT oi.id, oi.order_id, oi.menu_item_name, oi.quantity, oi.notes
       FROM order_items oi
       JOIN orders o ON oi.order_id = o.id
@@ -41,7 +41,7 @@ export async function GET() {
     `);
 
         // Group items by order_id
-        const itemsByOrderId = itemsResult.rows.reduce((acc, item) => {
+        const itemsByOrderId = itemsResult.reduce((acc, item) => {
             if (!acc[item.order_id]) {
                 acc[item.order_id] = [];
             }

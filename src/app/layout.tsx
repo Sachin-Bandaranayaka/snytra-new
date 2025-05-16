@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Suspense } from "react";
 import AppWrapper from "@/components/AppWrapper";
+import RootLayoutClient from "./RootLayoutClient";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,7 +38,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} min-h-screen flex flex-col antialiased`}
       >
         <AppWrapper>
-          {children}
+          <RootLayoutClient>
+            {children}
+          </RootLayoutClient>
         </AppWrapper>
       </body>
     </html>

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import { convertNumericStrings, processMenuItem } from '@/utils/dataConverter';
 
 export async function GET(req: NextRequest) {
@@ -27,18 +27,18 @@ export async function GET(req: NextRequest) {
         query += ` ORDER BY c.name, m.name`;
 
         // Execute the query
-        const result = await pool.query(query, queryParams);
+        const result = await executeQuery<any[]>(query, queryParams);
 
         // Convert string numeric values to actual numbers
-        const menuItems = convertNumericStrings(result.rows);
+        const menuItems = convertNumericStrings(result);
 
         // If no menu items found, create default ones
         if (menuItems.length === 0) {
             console.log('No menu items found, creating default items');
 
             // Get restaurant ID
-            const restaurantResult = await pool.query('SELECT id FROM restaurants LIMIT 1');
-            const restaurantId = restaurantResult.rows[0]?.id;
+            const restaurantResult = await executeQuery<any[]>('SELECT id FROM restaurants LIMIT 1');
+            const restaurantId = restaurantResult[0]?.id;
 
             if (!restaurantId) {
                 throw new Error('No restaurant found to associate menu items with');
@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
             // Get categories or create them if they don't exist
             let categories = await pool.query('SELECT id, name FROM categories WHERE is_active = true');
 
-            if (categories.rows.length === 0) {
+            if (categories.length === 0) {
                 // Call the categories API to create default categories
                 const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/dashboard/menu/categories`, {
                     method: 'GET',
@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
 
             // Map of category names to IDs
             const categoryMap = {};
-            categories.rows.forEach(cat => {
+            categories.forEach(cat => {
                 categoryMap[cat.name.toLowerCase()] = cat.id;
             });
 
@@ -150,7 +150,7 @@ export async function GET(req: NextRequest) {
                 const categoryId = categoryMap[item.category];
 
                 if (categoryId) {
-                    const insertResult = await pool.query(`
+                    const insertResult = await executeQuery<any[]>(`
                         INSERT INTO menu_items (
                             restaurant_id, 
                             category_id, 
@@ -180,16 +180,16 @@ export async function GET(req: NextRequest) {
                     ]);
 
                     // Add category name to the returned menu item
-                    const categoryName = categories.rows.find(cat => cat.id === categoryId)?.name;
+                    const categoryName = categories.find(cat => cat.id === categoryId)?.name;
                     newMenuItems.push({
-                        ...insertResult.rows[0],
+                        ...insertResult[0],
                         category_name: categoryName
                     });
                 }
             }
 
             // Fetch all active categories for navigation
-            const categoriesResult = await pool.query(`
+            const categoriesResult = await executeQuery<any[]>(`
                 SELECT id, name 
                 FROM categories 
                 WHERE is_active = true
@@ -198,14 +198,14 @@ export async function GET(req: NextRequest) {
 
             return NextResponse.json({
                 menuItems: convertNumericStrings(newMenuItems),
-                categories: categoriesResult.rows,
+                categories: categoriesResult,
                 success: true,
                 message: 'Default menu items created'
             });
         }
 
         // Fetch all active categories for navigation
-        const categoriesResult = await pool.query(`
+        const categoriesResult = await executeQuery<any[]>(`
             SELECT id, name 
             FROM categories 
             WHERE is_active = true
@@ -214,7 +214,7 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json({
             menuItems,
-            categories: categoriesResult.rows,
+            categories: categoriesResult,
             success: true
         });
     } catch (error: any) {

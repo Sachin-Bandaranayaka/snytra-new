@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { headers } from 'next/headers';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 // Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
@@ -152,9 +152,9 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
                     [plan_id]
                 );
 
-                if (planResult.rows.length > 0) {
-                    planName = planResult.rows[0].name;
-                    planType = planResult.rows[0].billing_interval;
+                if (planResult.length > 0) {
+                    planName = planResult[0].name;
+                    planType = planResult[0].billing_interval;
                     console.log('Found plan details:', { planName, planType });
                 } else {
                     console.log('No plan found in database, using defaults');
@@ -213,7 +213,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
                     planName
                 ]
             );
-            console.log('Subscription record created/updated:', subscriptionResult.rows);
+            console.log('Subscription record created/updated:', subscriptionResult);
 
             // Update subscription_events table if event ID was provided
             if (subscription_event_id) {
@@ -264,7 +264,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
         const customerId = subscription.customer as string;
 
         // Find user by Stripe customer ID
-        const { rows } = await pool.query(
+        const rows = await executeQuery<any[]>(
             'SELECT id FROM users WHERE stripe_customer_id = $1',
             [customerId]
         );
@@ -382,7 +382,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
         const status = subscription.status;
 
         // Find user by Stripe customer ID
-        const { rows } = await pool.query(
+        const rows = await executeQuery<any[]>(
             'SELECT id FROM users WHERE stripe_customer_id = $1',
             [customerId]
         );
@@ -456,7 +456,7 @@ async function handleSubscriptionCanceled(subscription: Stripe.Subscription) {
         const customerId = subscription.customer as string;
 
         // Find user by Stripe customer ID
-        const { rows } = await pool.query(
+        const rows = await executeQuery<any[]>(
             'SELECT id FROM users WHERE stripe_customer_id = $1',
             [customerId]
         );

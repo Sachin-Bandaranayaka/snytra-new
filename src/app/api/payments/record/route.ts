@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function POST(req: NextRequest) {
     try {
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
         nextMonthDate.setMonth(currentDate.getMonth() + 1);
 
         // Use subscription_payments table to log the payment
-        const { rows } = await pool.query(
+        const rows = await executeQuery<any[]>(
             `INSERT INTO subscription_payments (
                 user_id,
                 stripe_invoice_id, 

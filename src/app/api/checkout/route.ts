@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
     try {
@@ -16,9 +16,9 @@ export async function POST(request: NextRequest) {
 
         // Check if user exists
         const userQuery = 'SELECT id FROM users WHERE id = $1';
-        const userResult = await pool.query(userQuery, [userId]);
+        const userResult = await executeQuery<any[]>(userQuery, [userId]);
 
-        if (userResult.rowCount === 0) {
+        if (userResult.length === 0) {
             return NextResponse.json(
                 { error: 'User not found', success: false },
                 { status: 404 }
@@ -27,16 +27,16 @@ export async function POST(request: NextRequest) {
 
         // Check if plan exists and is active
         const planQuery = 'SELECT * FROM subscription_plans WHERE id = $1 AND is_active = true';
-        const planResult = await pool.query(planQuery, [planId]);
+        const planResult = await executeQuery<any[]>(planQuery, [planId]);
 
-        if (planResult.rowCount === 0) {
+        if (planResult.length === 0) {
             return NextResponse.json(
                 { error: 'Subscription plan not found or inactive', success: false },
                 { status: 404 }
             );
         }
 
-        const plan = planResult.rows[0];
+        const plan = planResult[0];
 
         // In a real application, we would integrate with a payment provider here
         // For this mock, we'll just update the user's subscription details
@@ -64,15 +64,15 @@ export async function POST(request: NextRequest) {
             RETURNING id, subscription_plan, subscription_status, subscription_current_period_start, subscription_current_period_end
         `;
 
-        const updateResult = await pool.query(updateQuery, [planId, periodEnd, userId]);
+        const updateResult = await executeQuery<any[]>(updateQuery, [planId, periodEnd, userId]);
 
-        if (updateResult.rowCount === 0) {
+        if (updateResult.length === 0) {
             throw new Error('Failed to update user subscription');
         }
 
         return NextResponse.json({
             success: true,
-            subscription: updateResult.rows[0],
+            subscription: updateResult[0],
             message: 'Subscription activated successfully'
         });
     } catch (error) {

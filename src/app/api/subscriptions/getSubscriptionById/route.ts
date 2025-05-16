@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
     try {
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
         }
 
         // Get subscription details
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `SELECT s.*, p.name as plan_name, p.price, p.billing_interval, p.description
        FROM subscriptions s
        JOIN subscription_plans p ON s.plan_id = p.id
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
             [subscriptionId, userId]
         );
 
-        if (result.rows.length === 0) {
+        if (result.length === 0) {
             return NextResponse.json(
                 { error: 'Subscription not found or does not belong to this user' },
                 { status: 404 }
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
         }
 
         return NextResponse.json({
-            subscription: result.rows[0]
+            subscription: result[0]
         });
 
     } catch (error) {

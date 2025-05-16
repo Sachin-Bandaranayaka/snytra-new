@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function GET(request: Request) {
     try {
@@ -46,11 +46,11 @@ export async function GET(request: Request) {
 
         query += ` ORDER BY ss.shift_date, ss.start_time`;
 
-        const result = await pool.query(query, params);
+        const result = await executeQuery<any[]>(query, params);
 
         return NextResponse.json({
             success: true,
-            shifts: result.rows
+            shifts: result
         });
     } catch (error: any) {
         console.error('Error fetching shifts:', error);
@@ -87,12 +87,12 @@ export async function POST(request: Request) {
         }
 
         // Check if staff exists
-        const staffCheck = await pool.query(
+        const staffCheck = await executeQuery<any[]>(
             'SELECT id FROM staff WHERE id = $1',
             [staff_id]
         );
 
-        if (staffCheck.rowCount === 0) {
+        if (staffCheck.length === 0) {
             return NextResponse.json(
                 { success: false, error: 'Staff member not found' },
                 { status: 400 }
@@ -100,7 +100,7 @@ export async function POST(request: Request) {
         }
 
         // Create new shift
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             `INSERT INTO staff_shifts 
         (staff_id, shift_date, start_time, end_time, break_minutes, status, notes)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -118,7 +118,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json({
             success: true,
-            shift: result.rows[0]
+            shift: result[0]
         });
     } catch (error: any) {
         console.error('Error creating shift:', error);

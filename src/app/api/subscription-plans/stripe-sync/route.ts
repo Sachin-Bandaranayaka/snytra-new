@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import Stripe from 'stripe';
 
 // Initialize Stripe with your secret key
@@ -23,22 +23,22 @@ export async function POST(request: NextRequest) {
         }
 
         // Get the plan details from the database
-        const planResult = await pool.query(
+        const planResult = await executeQuery<any[]>(
             `SELECT * FROM subscription_plans WHERE id = $1`,
             [planId]
         );
 
-        if (planResult.rows.length === 0) {
+        if (planResult.length === 0) {
             return NextResponse.json(
                 { error: 'Plan not found', success: false },
                 { status: 404 }
             );
         }
 
-        const plan = planResult.rows[0];
+        const plan = planResult[0];
 
         // Get the features for the plan
-        const featuresResult = await pool.query(
+        const featuresResult = await executeQuery<any[]>(
             `SELECT f.key, f.name, f.description 
              FROM plan_features pf
              JOIN features f ON pf.feature_key = f.key
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
             [planId]
         );
 
-        const features = featuresResult.rows.map(row => row.key);
+        const features = featuresResult.map(row => row.key);
 
         // Check if this plan already has a Stripe product ID
         let productId = plan.stripe_product_id;
@@ -139,16 +139,16 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
     try {
         // Get all active subscription plans
-        const plansResult = await pool.query(
+        const plansResult = await executeQuery<any[]>(
             `SELECT * FROM subscription_plans WHERE is_active = true`
         );
 
-        const plans = plansResult.rows;
+        const plans = plansResult;
         const results = [];
 
         for (const plan of plans) {
             // Get the features for the plan
-            const featuresResult = await pool.query(
+            const featuresResult = await executeQuery<any[]>(
                 `SELECT f.key, f.name, f.description 
                 FROM plan_features pf
                 JOIN features f ON pf.feature_key = f.key
@@ -156,7 +156,7 @@ export async function GET(request: NextRequest) {
                 [plan.id]
             );
 
-            const features = featuresResult.rows.map(row => row.key);
+            const features = featuresResult.map(row => row.key);
 
             // Check if this plan already has a Stripe product ID
             let productId = plan.stripe_product_id;

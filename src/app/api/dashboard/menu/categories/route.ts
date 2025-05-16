@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
     try {
         // Check all the columns we need
-        const columnsResult = await pool.query(`
+        const columnsResult = await executeQuery<any[]>(`
             SELECT column_name 
             FROM information_schema.columns 
             WHERE table_name = 'categories' AND column_name IN (
@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
         `);
 
         // Create a set of available columns for easy checking
-        const availableColumns = new Set(columnsResult.rows.map(row => row.column_name));
+        const availableColumns = new Set(columnsResult.map(row => row.column_name));
 
         // Add any missing columns
         const requiredColumns = [
@@ -38,14 +38,14 @@ export async function GET(req: NextRequest) {
         }
 
         // Now fetch categories with all columns (they should exist now)
-        const categoriesResult = await pool.query(`
+        const categoriesResult = await executeQuery<any[]>(`
             SELECT id, name, description, image_url, display_order, is_active 
             FROM categories 
             ORDER BY name ASC
         `);
 
         // Check if categories exist
-        if (categoriesResult.rows.length === 0) {
+        if (categoriesResult.length === 0) {
             console.log('No categories found, creating default categories');
 
             // Create default categories
@@ -58,8 +58,8 @@ export async function GET(req: NextRequest) {
             ];
 
             // Get restaurant ID (assuming there's at least one after the fix in restaurant/route.ts)
-            const restaurantResult = await pool.query('SELECT id FROM restaurants LIMIT 1');
-            const restaurantId = restaurantResult.rows[0]?.id;
+            const restaurantResult = await executeQuery<any[]>('SELECT id FROM restaurants LIMIT 1');
+            const restaurantId = restaurantResult[0]?.id;
 
             if (!restaurantId) {
                 throw new Error('No restaurant found to associate categories with');
@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
             });
 
             const insertResults = await Promise.all(insertPromises);
-            const newCategories = insertResults.map(result => result.rows[0]);
+            const newCategories = insertResults.map(result => result[0]);
 
             return NextResponse.json({
                 categories: newCategories,
@@ -87,7 +87,7 @@ export async function GET(req: NextRequest) {
         }
 
         return NextResponse.json({
-            categories: categoriesResult.rows,
+            categories: categoriesResult,
             success: true
         });
     } catch (error: any) {
@@ -112,12 +112,12 @@ export async function POST(req: NextRequest) {
         }
 
         // Check if category with this name already exists
-        const existingCategory = await pool.query(
+        const existingCategory = await executeQuery<any[]>(
             'SELECT id FROM categories WHERE LOWER(name) = LOWER($1)',
             [name.trim()]
         );
 
-        if (existingCategory.rows.length > 0) {
+        if (existingCategory.length > 0) {
             return NextResponse.json(
                 { error: 'A category with this name already exists', success: false },
                 { status: 400 }
@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Check all columns to make sure they exist
-        const columnsResult = await pool.query(`
+        const columnsResult = await executeQuery<any[]>(`
             SELECT column_name 
             FROM information_schema.columns 
             WHERE table_name = 'categories' AND column_name IN (
@@ -133,7 +133,7 @@ export async function POST(req: NextRequest) {
             )
         `);
 
-        const availableColumns = new Set(columnsResult.rows.map(row => row.column_name));
+        const availableColumns = new Set(columnsResult.map(row => row.column_name));
 
         // Add any missing columns before inserting
         const requiredColumns = [
@@ -158,13 +158,13 @@ export async function POST(req: NextRequest) {
         }
 
         // Insert new category with all columns
-        const result = await pool.query(
+        const result = await executeQuery<any[]>(
             'INSERT INTO categories (name, description, image_url, is_active) VALUES ($1, $2, $3, $4) RETURNING id, name, description, image_url, is_active',
             [name.trim(), description, image_url, is_active]
         );
 
         return NextResponse.json({
-            category: result.rows[0],
+            category: result[0],
             success: true
         });
     } catch (error: any) {
