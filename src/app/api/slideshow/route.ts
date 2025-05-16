@@ -87,19 +87,19 @@ export async function PATCH(req: NextRequest) {
         const values = {};
 
         if (title !== undefined) {
-            updateFields.push(`title = ${title}`);
+            updateFields.push(`title = ${sql.unsafe(title)}`);
             values.title = title;
         }
         if (description !== undefined) {
-            updateFields.push(`description = ${description}`);
+            updateFields.push(`description = ${sql.unsafe(description)}`);
             values.description = description;
         }
         if (imageUrl !== undefined) {
-            updateFields.push(`image_url = ${imageUrl}`);
+            updateFields.push(`image_url = ${sql.unsafe(imageUrl)}`);
             values.imageUrl = imageUrl;
         }
         if (iconType !== undefined) {
-            updateFields.push(`icon_type = ${iconType}`);
+            updateFields.push(`icon_type = ${sql.unsafe(iconType)}`);
             values.iconType = iconType;
         }
         if (order !== undefined) {
@@ -118,13 +118,16 @@ export async function PATCH(req: NextRequest) {
             );
         }
 
-        // Use a more direct approach with postgres.js
+        // Join the update fields with comma
+        const setClause = updateFields.join(', ');
+
+        // Execute the update query
         const result = await sql`
-      UPDATE slideshow
-      SET ${sql(updateFields.join(', '))}, updated_at = CURRENT_TIMESTAMP
-      WHERE id = ${id}
-      RETURNING *
-    `;
+            UPDATE slideshow
+            SET ${sql.unsafe(setClause)}, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ${id}
+            RETURNING *
+        `;
 
         if (result.length === 0) {
             return NextResponse.json(
