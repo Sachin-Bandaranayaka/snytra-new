@@ -4,6 +4,7 @@ import { useState, useEffect, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Bell, AlertTriangle, ArrowLeft, CalendarClock, Flag, Globe, Loader2 } from 'lucide-react';
+import { use } from 'react';
 
 interface NoticeParams {
     params: {
@@ -12,7 +13,8 @@ interface NoticeParams {
 }
 
 export default function EditNotice({ params }: NoticeParams) {
-    const noticeId = params.id;
+    const unwrappedParams = use(params);
+    const noticeId = unwrappedParams.id;
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
