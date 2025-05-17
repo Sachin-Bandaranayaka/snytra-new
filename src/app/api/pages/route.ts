@@ -5,23 +5,48 @@ import { prisma } from '@/lib/prisma';
 
 // GET: List all pages
 export async function GET() {
-    if (!(await isUserAdmin())) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-    }
     try {
+        // Check auth only after attempting to connect to avoid silent failures
+        const isAdmin = await isUserAdmin();
+        if (!isAdmin) {
+            return NextResponse.json({ error: 'Unauthorized', success: false }, { status: 403 });
+        }
+
+        // Get all pages with proper error handling
         const result = await executeQuery<any[]>('SELECT * FROM pages ORDER BY menu_order ASC, title ASC');
-        return NextResponse.json({ pages: result, success: true });
+
+        if (!result || !Array.isArray(result)) {
+            console.error('Pages query returned invalid result:', result);
+            return NextResponse.json({
+                error: 'Database returned invalid result',
+                success: false,
+                debug: { resultType: typeof result }
+            }, { status: 500 });
+        }
+
+        return NextResponse.json({
+            pages: result,
+            success: true,
+            count: result.length
+        });
     } catch (error) {
-        return NextResponse.json({ error: 'Failed to fetch pages' }, { status: 500 });
+        console.error('Failed to fetch pages:', error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return NextResponse.json({
+            error: 'Failed to fetch pages',
+            message: errorMessage,
+            success: false
+        }, { status: 500 });
     }
 }
 
 // POST: Create a new page
 export async function POST(request: NextRequest) {
-    if (!(await isUserAdmin())) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-    }
     try {
+        if (!(await isUserAdmin())) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+        }
+
         const {
             title,
             slug,
@@ -71,16 +96,18 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ page: result[0], success: true });
     } catch (error) {
         console.error('Create page error:', error);
-        return NextResponse.json({ error: 'Failed to create page' }, { status: 500 });
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return NextResponse.json({ error: 'Failed to create page', message: errorMessage }, { status: 500 });
     }
 }
 
 // PATCH: Update a page (expects id in body)
 export async function PATCH(request: NextRequest) {
-    if (!(await isUserAdmin())) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-    }
     try {
+        if (!(await isUserAdmin())) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+        }
+
         const {
             id,
             title,
@@ -137,16 +164,18 @@ export async function PATCH(request: NextRequest) {
         return NextResponse.json({ page: result[0], success: true });
     } catch (error) {
         console.error('Update page error:', error);
-        return NextResponse.json({ error: 'Failed to update page' }, { status: 500 });
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return NextResponse.json({ error: 'Failed to update page', message: errorMessage }, { status: 500 });
     }
 }
 
 // DELETE: Delete a page (expects id in body)
 export async function DELETE(request: NextRequest) {
-    if (!(await isUserAdmin())) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-    }
     try {
+        if (!(await isUserAdmin())) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+        }
+
         const { id } = await request.json();
         if (!id) {
             return NextResponse.json({ error: 'Page ID is required' }, { status: 400 });
@@ -164,6 +193,7 @@ export async function DELETE(request: NextRequest) {
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error('Delete page error:', error);
-        return NextResponse.json({ error: 'Failed to delete page' }, { status: 500 });
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return NextResponse.json({ error: 'Failed to delete page', message: errorMessage }, { status: 500 });
     }
 } 

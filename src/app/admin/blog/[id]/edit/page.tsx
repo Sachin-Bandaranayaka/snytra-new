@@ -3,6 +3,7 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { use } from 'react';
 
 interface Category {
     id: string;
@@ -30,7 +31,8 @@ interface EditBlogPostParams {
 
 export default function EditBlogPost({ params }: EditBlogPostParams) {
     const router = useRouter();
-    const { id } = params;
+    const unwrappedParams = use(params);
+    const { id } = unwrappedParams;
 
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);

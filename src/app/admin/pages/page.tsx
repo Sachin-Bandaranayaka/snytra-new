@@ -21,6 +21,7 @@ export default function PagesManagement() {
     const [pages, setPages] = useState<Page[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [debugInfo, setDebugInfo] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'list' | 'sitemap'>('list');
 
     useEffect(() => {
@@ -28,17 +29,33 @@ export default function PagesManagement() {
             setIsLoading(true);
             setError(null);
             try {
-                const response = await fetch('/api/pages', { credentials: 'include' });
+                const response = await fetch('/api/pages', {
+                    credentials: 'include',
+                    headers: {
+                        'Cache-Control': 'no-cache'
+                    }
+                });
+
                 if (!response.ok) {
-                    throw new Error('Failed to fetch pages');
+                    const errorText = await response.text();
+                    throw new Error(`Failed to fetch pages: ${response.status} - ${errorText || response.statusText}`);
                 }
+
                 const data = await response.json();
+                setDebugInfo(`Found ${data.pages?.length || 0} pages`);
+
+                if (!data.pages || !Array.isArray(data.pages)) {
+                    setPages([]);
+                    setDebugInfo(`Pages data is not an array or is missing: ${JSON.stringify(data)}`);
+                    return;
+                }
 
                 // Create a hierarchical structure for the sitemap view
-                const structuredPages = createPageHierarchy(data.pages || []);
+                const structuredPages = createPageHierarchy(data.pages);
                 setPages(structuredPages);
             } catch (err) {
-                setError('Error loading pages.');
+                console.error('Error loading pages:', err);
+                setError(`Error loading pages: ${err instanceof Error ? err.message : String(err)}`);
             } finally {
                 setIsLoading(false);
             }
@@ -100,7 +117,8 @@ export default function PagesManagement() {
                 });
 
                 if (!response.ok) {
-                    throw new Error('Failed to delete page');
+                    const errorText = await response.text();
+                    throw new Error(`Failed to delete page: ${response.status} - ${errorText || response.statusText}`);
                 }
 
                 // Remove the deleted page from state
@@ -117,18 +135,23 @@ export default function PagesManagement() {
                 setPages(updatePages([...pages]));
             } catch (err) {
                 console.error('Error deleting page:', err);
-                setError('Failed to delete page. Please try again later.');
+                setError(`Failed to delete page: ${err instanceof Error ? err.message : String(err)}`);
             }
         }
     };
 
     const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        return new Intl.DateTimeFormat('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-        }).format(date);
+        if (!dateString) return 'N/A';
+        try {
+            const date = new Date(dateString);
+            return new Intl.DateTimeFormat('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+            }).format(date);
+        } catch (err) {
+            return 'Invalid date';
+        }
     };
 
     // Render a sitemap tree node
@@ -159,7 +182,7 @@ export default function PagesManagement() {
                         </div>
                         <div className="text-sm text-gray-500 mt-1">
                             <span className="mr-3">/{page.slug}</span>
-                            <span>Template: {page.page_template}</span>
+                            <span>Template: {page.page_template || 'default'}</span>
                         </div>
                     </div>
                     <div className="flex space-x-2">
@@ -197,14 +220,6 @@ export default function PagesManagement() {
         );
     }
 
-    if (error) {
-        return (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                <p>{error}</p>
-            </div>
-        );
-    }
-
     // Flatten the hierarchical pages for list view
     const flattenPages = (pages: Page[]): Page[] => {
         let result: Page[] = [];
@@ -231,13 +246,25 @@ export default function PagesManagement() {
                 </Link>
             </div>
 
+            {debugInfo && (
+                <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded mb-4">
+                    <p className="text-sm">Debug info: {debugInfo}</p>
+                </div>
+            )}
+
+            {error && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                    <p>{error}</p>
+                </div>
+            )}
+
             {/* Tab Navigation */}
             <div className="mb-6 border-b border-gray-200">
                 <nav className="flex space-x-8">
                     <button
                         className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'list'
-                                ? 'border-primary-orange text-primary-orange'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            ? 'border-primary-orange text-primary-orange'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                             }`}
                         onClick={() => setActiveTab('list')}
                     >
@@ -245,8 +272,8 @@ export default function PagesManagement() {
                     </button>
                     <button
                         className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'sitemap'
-                                ? 'border-primary-orange text-primary-orange'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            ? 'border-primary-orange text-primary-orange'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                             }`}
                         onClick={() => setActiveTab('sitemap')}
                     >
@@ -283,7 +310,7 @@ export default function PagesManagement() {
                         <tbody className="bg-white divide-y divide-gray-200">
                             {flatPages.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="text-center py-8 text-gray-500">No pages found.</td>
+                                    <td colSpan={6} className="text-center py-8 text-gray-500">No pages found. <Link href="/admin/pages/new" className="text-primary-orange hover:underline">Create your first page</Link></td>
                                 </tr>
                             ) : (
                                 flatPages.map((page) => (
@@ -345,7 +372,9 @@ export default function PagesManagement() {
                 <div className="bg-white rounded-lg shadow p-6">
                     <h2 className="text-lg font-medium mb-4">Site Structure</h2>
                     {pages.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500">No pages found.</div>
+                        <div className="text-center py-8 text-gray-500">
+                            No pages found. <Link href="/admin/pages/new" className="text-primary-orange hover:underline">Create your first page</Link>
+                        </div>
                     ) : (
                         <div className="space-y-4 mt-6">
                             {pages.map(page => renderSitemapNode(page))}

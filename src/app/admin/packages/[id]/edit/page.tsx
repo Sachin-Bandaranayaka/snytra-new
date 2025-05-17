@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { CATEGORY_NAMES, FEATURE_CATEGORIES, SYSTEM_FEATURES, getFeaturesByCategory } from '@/lib/system-features';
+import { use } from 'react';
 
 interface EditPackageProps {
     params: {
@@ -13,6 +14,8 @@ interface EditPackageProps {
 
 export default function EditPackagePage({ params }: EditPackageProps) {
     const router = useRouter();
+    const unwrappedParams = use(params);
+    const packageId = unwrappedParams.id;
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -37,7 +40,7 @@ export default function EditPackagePage({ params }: EditPackageProps) {
     useEffect(() => {
         const fetchPackageData = async () => {
             try {
-                const response = await fetch(`/api/subscription-plans/${params.id}`);
+                const response = await fetch(`/api/subscription-plans/${packageId}`);
 
                 if (!response.ok) {
                     throw new Error(`Error fetching package: ${response.status}`);
@@ -83,7 +86,7 @@ export default function EditPackagePage({ params }: EditPackageProps) {
         };
 
         fetchPackageData();
-    }, [params.id]);
+    }, [packageId]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -164,7 +167,7 @@ export default function EditPackagePage({ params }: EditPackageProps) {
                 return feature ? feature.name : featureId;
             });
 
-            const response = await fetch(`/api/subscription-plans/${params.id}`, {
+            const response = await fetch(`/api/subscription-plans/${packageId}`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json'

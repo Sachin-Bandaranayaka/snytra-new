@@ -4,6 +4,7 @@ import { useState, useEffect, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import TipTapEditor from '@/components/editor/TipTapEditor';
+import { use } from 'react';
 
 interface PageParams {
     params: {
@@ -20,7 +21,8 @@ interface Page {
 
 export default function EditPage({ params }: PageParams) {
     const router = useRouter();
-    const { id } = params;
+    const unwrappedParams = use(params);
+    const { id } = unwrappedParams;
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
