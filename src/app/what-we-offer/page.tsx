@@ -591,7 +591,7 @@ export default function WhatWeOffer() {
                         <a href="/request-demo" className="py-3 px-6 bg-white text-primary rounded-lg font-medium hover:bg-gray-100 transition-colors">
                             Schedule a Demo
                         </a>
-                        <a href="/contact" className="py-3 px-6 bg-transparent border-2 border-white text-white rounded-lg font-medium hover:bg-white/10 transition-colors">
+                        <a href="/contact-us" className="py-3 px-6 bg-transparent border-2 border-white text-white rounded-lg font-medium hover:bg-white/10 transition-colors">
                             Contact Us
                         </a>
                     </div>

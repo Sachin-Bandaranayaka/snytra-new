@@ -23,7 +23,9 @@ interface Page {
 
 // Dynamic metadata generation based on the page content
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-    const page = await getPageBySlug(params.slug);
+    // Ensure params is fully resolved before accessing its properties
+    const resolvedParams = await Promise.resolve(params);
+    const page = await getPageBySlug(resolvedParams.slug);
 
     if (!page) {
         return {
@@ -65,7 +67,9 @@ async function getPageBySlug(slug: string): Promise<Page | null> {
 }
 
 export default async function DynamicPage({ params }: PageProps) {
-    const page = await getPageBySlug(params.slug);
+    // Ensure params is fully resolved before accessing its properties
+    const resolvedParams = await Promise.resolve(params);
+    const page = await getPageBySlug(resolvedParams.slug);
 
     // If page doesn't exist or is not published, show 404
     if (!page) {
