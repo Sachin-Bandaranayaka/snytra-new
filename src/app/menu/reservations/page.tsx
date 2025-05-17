@@ -482,35 +482,46 @@ function ReservationContent() {
                                                     }`}
                                                 style={selectedTable === table.id ? { borderColor: primaryColor, "--tw-ring-color": primaryColor } as React.CSSProperties : {}}
                                             >
-                                                <div className="flex items-center mb-2">
-                                                    <div className={`w-16 h-16 rounded-lg flex items-center justify-center ${selectedTable === table.id ? 'text-white' : 'bg-gray-100'
-                                                        }`}
-                                                        style={selectedTable === table.id ? { backgroundColor: primaryColor } : {}}>
-                                                        <span className="text-lg font-bold">{table.table_number}</span>
+                                                <div className="flex flex-col">
+                                                    <div className="flex mb-3">
+                                                        <div className={`w-16 h-16 rounded-lg flex items-center justify-center ${selectedTable === table.id ? 'text-white' : 'bg-gray-100'}`}
+                                                            style={selectedTable === table.id ? { backgroundColor: primaryColor } : {}}>
+                                                            <span className="text-2xl font-bold">{table.table_number}</span>
+                                                        </div>
+                                                        <div className="ml-4">
+                                                            <h4 className="font-medium">Table {table.table_number}</h4>
+                                                            <p className="text-sm text-gray-500">{table.seats} seats</p>
+                                                            {table.is_smoking && (
+                                                                <span className="inline-flex items-center px-2 py-0.5 mt-1 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                                                                    Smoking Area
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                    <div className="ml-4">
-                                                        <h4 className="font-medium">Table {table.table_number}</h4>
-                                                        <p className="text-sm text-gray-500">{table.seats} seats</p>
-                                                        {table.is_smoking && (
-                                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
-                                                                Smoking Area
+
+                                                    <div className="w-full h-auto bg-gray-50 rounded-lg p-4 flex justify-center items-center">
+                                                        {/* Table visualization */}
+                                                        <div className={`relative rounded-md border-2 transition-all ${selectedTable === table.id ? 'border-opacity-100' : 'border-opacity-60'}`}
+                                                            style={{
+                                                                borderColor: primaryColor,
+                                                                width: table.seats <= 4 ? '100px' : '140px',
+                                                                height: table.seats <= 4 ? '100px' : table.seats <= 6 ? '100px' : '140px',
+                                                                borderRadius: table.seats <= 4 ? '100%' : '8px'
+                                                            }}>
+                                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                                <span className="text-4xl font-bold" style={{ color: primaryColor }}>{table.seats}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {selectedTable === table.id && (
+                                                        <div className="mt-3 text-center">
+                                                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                                <Check className="w-3 h-3 mr-1" />
+                                                                Selected
                                                             </span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <div className="w-full h-24 bg-gray-50 rounded flex items-center justify-center mb-2">
-                                                    <div className="relative w-20 h-20 bg-white border-2 border-gray-300 rounded-md flex items-center justify-center">
-                                                        {Array.from({ length: Math.min(table.seats, 6) }).map((_, i) => (
-                                                            <div
-                                                                key={`table-${table.id}-seat-${i}`}
-                                                                className="absolute w-4 h-4 bg-gray-500 rounded-full"
-                                                                style={{
-                                                                    top: i % 2 === 0 ? '15%' : '75%',
-                                                                    left: ((i % 3) * 33 + 16) + '%'
-                                                                }}
-                                                            ></div>
-                                                        ))}
-                                                    </div>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         ))}
