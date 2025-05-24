@@ -35,17 +35,21 @@ export default function BlogCategoriesManagement() {
     const fetchCategories = async () => {
         try {
             setIsLoading(true);
-            const response = await fetch('/api/blog/categories');
+            const response = await fetch('/api/blog/categories?admin=true');
 
             if (!response.ok) {
-                throw new Error('Failed to fetch categories');
+                if (response.status === 401) {
+                    throw new Error('You must be logged in as an admin to view categories');
+                } else {
+                    throw new Error('Failed to fetch categories');
+                }
             }
 
             const data = await response.json();
             setCategories(data.categories);
         } catch (err) {
             console.error('Error fetching categories:', err);
-            setError('Failed to load categories. Please try again later.');
+            setError(err instanceof Error ? err.message : 'Failed to load categories. Please try again later.');
         } finally {
             setIsLoading(false);
         }
@@ -90,7 +94,7 @@ export default function BlogCategoriesManagement() {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to save category');
+                throw new Error(errorData.error || 'Failed to save category');
             }
 
             // Reset form and refresh categories
@@ -116,7 +120,7 @@ export default function BlogCategoriesManagement() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this category? Any posts assigned to this category will need to be reassigned.')) {
+        if (!confirm('Are you sure you want to delete this category?')) {
             return;
         }
 
@@ -125,11 +129,18 @@ export default function BlogCategoriesManagement() {
                 method: 'DELETE',
             });
 
+            const data = await response.json();
+
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to delete category');
+                // Handle different error types
+                if (response.status === 401) {
+                    throw new Error('You are not authorized to delete categories. Please log in as an admin.');
+                } else {
+                    throw new Error(data.error || 'Failed to delete category');
+                }
             }
 
+            setError(null);
             // Refresh categories
             fetchCategories();
         } catch (err) {
@@ -221,9 +232,9 @@ export default function BlogCategoriesManagement() {
                                                     </button>
                                                     <button
                                                         onClick={() => handleDelete(category.id)}
-                                                        className="text-red-600 hover:text-red-900 px-2 py-1"
+                                                        className={`px-2 py-1 ${category.post_count && category.post_count > 0 ? 'text-gray-400 cursor-not-allowed' : 'text-red-600 hover:text-red-900'}`}
                                                         disabled={category.post_count && category.post_count > 0}
-                                                        title={category.post_count && category.post_count > 0 ? 'Cannot delete category with posts' : ''}
+                                                        title={category.post_count && category.post_count > 0 ? 'Cannot delete category with posts' : 'Delete this category'}
                                                     >
                                                         Delete
                                                     </button>

@@ -1,17 +1,7 @@
-import { Metadata, Viewport } from 'next';
-import { redirect } from 'next/navigation';
-import RegisterPageClient from './client';
+"use client";
 
-export const metadata: Metadata = {
-    title: "Sign Up | Snytra",
-    description: "Create your Snytra account to streamline your restaurant operations."
-};
-
-export const viewport: Viewport = {
-    width: "device-width",
-    initialScale: 1.0,
-};
+import RegisterForm from './RegisterForm';
 
 export default function Register() {
-    redirect('/handler/signup');
+    return <RegisterForm />;
 }
