@@ -38,44 +38,25 @@ const nextConfig = {
     }
     return config;
   },
-  // Update image configuration using remotePatterns instead of domains
   images: {
+    domains: ['uploadthing.com', 'fonts.gstatic.com', 'randomuser.me', 'utfs.io'],
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'images.unsplash.com',
-        pathname: '**',
+        hostname: 'uploadthing.com',
       },
       {
         protocol: 'https',
-        hostname: 'cdn.example.com',
-        pathname: '**',
+        hostname: 'fonts.gstatic.com',
       },
       {
         protocol: 'https',
         hostname: 'randomuser.me',
-        pathname: '**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'example.com',
-        pathname: '**',
-      },
-      {
-        protocol: 'http',
-        hostname: 'example.com',
-        pathname: '**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'uploadthing.com',
-        pathname: '**',
       },
       {
         protocol: 'https',
         hostname: 'utfs.io',
-        pathname: '**',
-      },
+      }
     ],
   },
   // Optional: Adjust the output structure

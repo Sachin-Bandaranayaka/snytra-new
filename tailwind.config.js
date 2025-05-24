@@ -7,6 +7,9 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['var(--font-sans)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+      },
       colors: {
         primary: '#D94E1F', // Warm Earthy Red
         'primary-orange': '#E85D10', // Main orange from mockups
