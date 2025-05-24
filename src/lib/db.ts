@@ -134,6 +134,10 @@ export async function executeTransaction<T = any>(
     }
 }
 
+// For backward compatibility
+export const sql = getSqlClient();
+export const pool = !isServerless ? getConnectionPool() : undefined;
+
 // Export default client for convenience
 export const db = {
     sql: getSqlClient(),
