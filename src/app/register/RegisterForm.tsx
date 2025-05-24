@@ -135,17 +135,6 @@ export default function RegisterForm() {
         }
     }, [searchParams]);
 
-    // Set default values for hidden fields
-    useEffect(() => {
-        setCompanyInfo(prev => ({
-            ...prev,
-            address: 'Default Address',
-            city: 'Default City',
-            state: 'Default State',
-            zipCode: '00000'
-        }));
-    }, []);
-
     // Handle form submission
     const handleSubmit = async () => {
         try {
@@ -154,12 +143,35 @@ export default function RegisterForm() {
 
             // Prepare registration data
             const registrationData = {
-                companyInfo,
-                contactDetails,
+                companyInfo: {
+                    name: companyInfo.name,
+                    industry: companyInfo.industry,
+                    address: companyInfo.address,
+                    city: companyInfo.city,
+                    state: companyInfo.state,
+                    zipCode: companyInfo.zipCode,
+                    country: companyInfo.country,
+                    businessSize: companyInfo.businessSize,
+                    numLocations: companyInfo.numLocations
+                },
+                contactDetails: {
+                    name: contactDetails.contactName,
+                    jobTitle: contactDetails.jobTitle,
+                    email: contactDetails.contactEmail,
+                    phone: contactDetails.phoneNumber
+                },
                 accountCredentials: {
                     username: accountCredentials.username,
                     password: accountCredentials.password,
-                    enableTwoFactor: accountCredentials.enableTwoFactor
+                    enableTwoFactor: accountCredentials.enableTwoFactor,
+                    securityQuestion: accountCredentials.securityQuestion,
+                    securityAnswer: accountCredentials.securityAnswer
+                },
+                legalCompliance: {
+                    acceptTerms: legalCompliance.acceptTerms,
+                    acceptPrivacyPolicy: legalCompliance.acceptPrivacyPolicy,
+                    taxId: legalCompliance.taxId,
+                    businessRegistration: legalCompliance.businessRegistration
                 }
             };
 
@@ -555,6 +567,112 @@ export default function RegisterForm() {
                                             <p className="mt-1 text-sm text-red-600">{formErrors.country}</p>
                                         )}
                                     </div>
+
+                                    <div>
+                                        <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+                                            Street Address*
+                                        </label>
+                                        <div className="relative">
+                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                                                </svg>
+                                            </div>
+                                            <input
+                                                type="text"
+                                                id="address"
+                                                name="address"
+                                                value={companyInfo.address}
+                                                onChange={(e) => setCompanyInfo({ ...companyInfo, address: e.target.value })}
+                                                className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                                                placeholder="123 Business Street"
+                                                required
+                                            />
+                                        </div>
+                                        {formErrors.address && (
+                                            <p className="mt-1 text-sm text-red-600">{formErrors.address}</p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
+                                            City*
+                                        </label>
+                                        <div className="relative">
+                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                </svg>
+                                            </div>
+                                            <input
+                                                type="text"
+                                                id="city"
+                                                name="city"
+                                                value={companyInfo.city}
+                                                onChange={(e) => setCompanyInfo({ ...companyInfo, city: e.target.value })}
+                                                className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                                                placeholder="Your city"
+                                                required
+                                            />
+                                        </div>
+                                        {formErrors.city && (
+                                            <p className="mt-1 text-sm text-red-600">{formErrors.city}</p>
+                                        )}
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1">
+                                                State/Province*
+                                            </label>
+                                            <div className="relative">
+                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                                                    </svg>
+                                                </div>
+                                                <input
+                                                    type="text"
+                                                    id="state"
+                                                    name="state"
+                                                    value={companyInfo.state}
+                                                    onChange={(e) => setCompanyInfo({ ...companyInfo, state: e.target.value })}
+                                                    className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                                                    placeholder="Your state/province"
+                                                    required
+                                                />
+                                            </div>
+                                            {formErrors.state && (
+                                                <p className="mt-1 text-sm text-red-600">{formErrors.state}</p>
+                                            )}
+                                        </div>
+
+                                        <div>
+                                            <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700 mb-1">
+                                                ZIP/Postal Code*
+                                            </label>
+                                            <div className="relative">
+                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                    </svg>
+                                                </div>
+                                                <input
+                                                    type="text"
+                                                    id="zipCode"
+                                                    name="zipCode"
+                                                    value={companyInfo.zipCode}
+                                                    onChange={(e) => setCompanyInfo({ ...companyInfo, zipCode: e.target.value })}
+                                                    className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                                                    placeholder="ZIP/Postal code"
+                                                    required
+                                                />
+                                            </div>
+                                            {formErrors.zipCode && (
+                                                <p className="mt-1 text-sm text-red-600">{formErrors.zipCode}</p>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -679,7 +797,7 @@ export default function RegisterForm() {
                                         <div className="relative">
                                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                                 <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                                 </svg>
                                             </div>
                                             <input
@@ -689,7 +807,7 @@ export default function RegisterForm() {
                                                 value={accountCredentials.username}
                                                 onChange={(e) => setAccountCredentials({ ...accountCredentials, username: e.target.value })}
                                                 className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                                                placeholder="Your username"
+                                                placeholder="Choose a username"
                                                 required
                                             />
                                         </div>
@@ -705,7 +823,7 @@ export default function RegisterForm() {
                                         <div className="relative">
                                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                                 <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                                 </svg>
                                             </div>
                                             <input
@@ -715,7 +833,7 @@ export default function RegisterForm() {
                                                 value={accountCredentials.password}
                                                 onChange={(e) => setAccountCredentials({ ...accountCredentials, password: e.target.value })}
                                                 className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                                                placeholder="Your password"
+                                                placeholder="Create a strong password"
                                                 required
                                             />
                                         </div>
@@ -731,7 +849,7 @@ export default function RegisterForm() {
                                         <div className="relative">
                                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                                 <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                                 </svg>
                                             </div>
                                             <input
@@ -750,39 +868,140 @@ export default function RegisterForm() {
                                         )}
                                     </div>
 
-                                    <div className="flex items-center">
-                                        <input
-                                            type="checkbox"
-                                            id="enableTwoFactor"
-                                            name="enableTwoFactor"
-                                            checked={accountCredentials.enableTwoFactor}
-                                            onChange={(e) => setAccountCredentials({ ...accountCredentials, enableTwoFactor: e.target.checked })}
-                                            className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                                        />
-                                        <label htmlFor="enableTwoFactor" className="ml-2 block text-sm text-gray-700">
-                                            Enable Two-Factor Authentication
-                                        </label>
+                                    <div>
+                                        <div className="flex items-center justify-between mb-1">
+                                            <label htmlFor="enableTwoFactor" className="block text-sm font-medium text-gray-700">
+                                                Two-Factor Authentication
+                                            </label>
+                                        </div>
+                                        <div className="flex items-center">
+                                            <input
+                                                type="checkbox"
+                                                id="enableTwoFactor"
+                                                name="enableTwoFactor"
+                                                checked={accountCredentials.enableTwoFactor}
+                                                onChange={(e) => setAccountCredentials({ ...accountCredentials, enableTwoFactor: e.target.checked })}
+                                                className="h-5 w-5 text-primary focus:ring-primary border-gray-300 rounded"
+                                            />
+                                            <label htmlFor="enableTwoFactor" className="ml-2 block text-sm text-gray-600">
+                                                Enable two-factor authentication for added security
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div className="mt-6">
-                                    <div className="flex items-center">
-                                        <input
-                                            type="checkbox"
-                                            id="acceptTerms"
-                                            name="acceptTerms"
-                                            checked={legalCompliance.acceptTerms}
-                                            onChange={(e) => setLegalCompliance({ ...legalCompliance, acceptTerms: e.target.checked })}
-                                            className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                                            required
-                                        />
-                                        <label htmlFor="acceptTerms" className="ml-2 block text-sm text-gray-700">
-                                            I agree to the <Link href="/terms" className="text-primary hover:underline">Terms of Service</Link> and <Link href="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
-                                        </label>
+                                <div className="border-t border-gray-200 pt-6">
+                                    <h3 className="text-lg font-semibold mb-4">Security Questions</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label htmlFor="securityQuestion" className="block text-sm font-medium text-gray-700 mb-1">
+                                                Security Question
+                                            </label>
+                                            <select
+                                                id="securityQuestion"
+                                                name="securityQuestion"
+                                                value={accountCredentials.securityQuestion}
+                                                onChange={(e) => setAccountCredentials({ ...accountCredentials, securityQuestion: e.target.value })}
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary appearance-none"
+                                            >
+                                                <option value="">Select a security question</option>
+                                                <option value="What was your first pet's name?">What was your first pet's name?</option>
+                                                <option value="What was the name of your first school?">What was the name of your first school?</option>
+                                                <option value="What is your mother's maiden name?">What is your mother's maiden name?</option>
+                                                <option value="What was the make of your first car?">What was the make of your first car?</option>
+                                                <option value="What is your favorite book?">What is your favorite book?</option>
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label htmlFor="securityAnswer" className="block text-sm font-medium text-gray-700 mb-1">
+                                                Security Answer
+                                            </label>
+                                            <input
+                                                type="text"
+                                                id="securityAnswer"
+                                                name="securityAnswer"
+                                                value={accountCredentials.securityAnswer}
+                                                onChange={(e) => setAccountCredentials({ ...accountCredentials, securityAnswer: e.target.value })}
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                                                placeholder="Your answer"
+                                            />
+                                        </div>
                                     </div>
-                                    {formErrors.acceptTerms && (
-                                        <p className="mt-1 text-sm text-red-600">{formErrors.acceptTerms}</p>
-                                    )}
+                                </div>
+
+                                <div className="border-t border-gray-200 pt-6">
+                                    <h3 className="text-lg font-semibold mb-4">Legal & Compliance</h3>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <div className="flex items-center">
+                                                <input
+                                                    type="checkbox"
+                                                    id="acceptTerms"
+                                                    name="acceptTerms"
+                                                    checked={legalCompliance.acceptTerms}
+                                                    onChange={(e) => setLegalCompliance({ ...legalCompliance, acceptTerms: e.target.checked })}
+                                                    className="h-5 w-5 text-primary focus:ring-primary border-gray-300 rounded"
+                                                    required
+                                                />
+                                                <label htmlFor="acceptTerms" className="ml-2 block text-sm text-gray-600">
+                                                    I accept the <Link href="/terms" className="text-primary hover:underline">Terms & Conditions</Link>*
+                                                </label>
+                                            </div>
+                                            {formErrors.acceptTerms && (
+                                                <p className="mt-1 text-sm text-red-600">{formErrors.acceptTerms}</p>
+                                            )}
+                                        </div>
+
+                                        <div>
+                                            <div className="flex items-center">
+                                                <input
+                                                    type="checkbox"
+                                                    id="acceptPrivacyPolicy"
+                                                    name="acceptPrivacyPolicy"
+                                                    checked={legalCompliance.acceptPrivacyPolicy}
+                                                    onChange={(e) => setLegalCompliance({ ...legalCompliance, acceptPrivacyPolicy: e.target.checked })}
+                                                    className="h-5 w-5 text-primary focus:ring-primary border-gray-300 rounded"
+                                                    required
+                                                />
+                                                <label htmlFor="acceptPrivacyPolicy" className="ml-2 block text-sm text-gray-600">
+                                                    I accept the <Link href="/privacy" className="text-primary hover:underline">Privacy Policy</Link>*
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                                            <div>
+                                                <label htmlFor="taxId" className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Tax ID / VAT Number
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    id="taxId"
+                                                    name="taxId"
+                                                    value={legalCompliance.taxId}
+                                                    onChange={(e) => setLegalCompliance({ ...legalCompliance, taxId: e.target.value })}
+                                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                                                    placeholder="Enter your tax ID"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label htmlFor="businessRegistration" className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Business Registration Number
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    id="businessRegistration"
+                                                    name="businessRegistration"
+                                                    value={legalCompliance.businessRegistration}
+                                                    onChange={(e) => setLegalCompliance({ ...legalCompliance, businessRegistration: e.target.value })}
+                                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                                                    placeholder="Enter your business registration"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -815,6 +1034,10 @@ export default function RegisterForm() {
                                     if (!companyInfo.name) errors.companyName = 'Company name is required';
                                     if (!companyInfo.industry) errors.industry = 'Industry is required';
                                     if (!companyInfo.businessSize) errors.businessSize = 'Business size is required';
+                                    if (!companyInfo.address) errors.address = 'Address is required';
+                                    if (!companyInfo.city) errors.city = 'City is required';
+                                    if (!companyInfo.state) errors.state = 'State/Province is required';
+                                    if (!companyInfo.zipCode) errors.zipCode = 'ZIP/Postal code is required';
 
                                     if (Object.keys(errors).length > 0) {
                                         setFormErrors(errors);

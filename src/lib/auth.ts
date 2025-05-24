@@ -138,7 +138,7 @@ export const isAdmin = async () => {
     const session = await getServerSession(authOptions);
     // Adjust this logic based on how you store roles in your session
     if (session && (session.user as any)?.role === 'admin') {
-        return true;
+        return { success: true };
     }
-    return false;
-}; 
+    return { success: false, error: 'Unauthorized: Admin access required' };
+};
