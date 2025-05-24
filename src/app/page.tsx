@@ -99,6 +99,106 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Online Ordering System Section */}
+      <section className="py-20 bg-beige">
+        <div className="container mx-auto px-6">
+          <div className="flex flex-col md:flex-row items-center gap-10">
+            <div className="md:w-1/2 mb-8 md:mb-0">
+              <h2 className="text-4xl md:text-5xl font-bold text-primary mb-6">
+                Online Ordering System
+              </h2>
+              <p className="text-lg mb-8 text-charcoal leading-relaxed">
+                Streamline your business operations with our comprehensive online ordering system. Our platform helps you manage orders, menus, and customer data efficiently, all in one place.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                <div className="flex items-start">
+                  <svg className="flex-shrink-0 h-6 w-6 text-olive mt-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="ml-3 text-charcoal">Menu Management</span>
+                </div>
+                <div className="flex items-start">
+                  <svg className="flex-shrink-0 h-6 w-6 text-olive mt-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="ml-3 text-charcoal">Order Processing</span>
+                </div>
+                <div className="flex items-start">
+                  <svg className="flex-shrink-0 h-6 w-6 text-olive mt-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="ml-3 text-charcoal">Customer Management</span>
+                </div>
+                <div className="flex items-start">
+                  <svg className="flex-shrink-0 h-6 w-6 text-olive mt-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="ml-3 text-charcoal">Real-time Analytics</span>
+                </div>
+              </div>
+              <div className="flex flex-row gap-4">
+                <Link
+                  href="/products/online-ordering-system"
+                  className="bg-primary text-white px-6 py-3 rounded-md font-medium text-center hover:bg-primary/90 transition-colors w-full md:w-auto"
+                >
+                  Learn More
+                </Link>
+                <Link
+                  href="/register?product=online-ordering-system"
+                  className="border border-primary text-primary px-6 py-3 rounded-md font-medium text-center hover:bg-beige/70 transition-colors w-full md:w-auto"
+                >
+                  Get Started
+                </Link>
+              </div>
+            </div>
+            <div className="md:w-1/2">
+              <div className="rounded-lg overflow-hidden shadow-xl border border-lightGray">
+                <Image
+                  src="https://uploadthing.com/f/ead1c30f-66b7-4651-8474-13461388a9e2-online-ordering-system.jpg"
+                  alt="Online Ordering System Dashboard"
+                  width={600}
+                  height={400}
+                  className="w-full h-auto"
+                  priority
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-6">
+          <h2 className="text-3xl font-bold text-primary text-center mb-12">
+            How Our Ordering System Works
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-beige/30 p-8 rounded-lg border border-lightGray">
+              <div className="flex items-center justify-center w-16 h-16 bg-primary text-white rounded-full mb-6 text-2xl font-bold mx-auto">1</div>
+              <h3 className="text-xl font-bold mb-4 text-center">Create Your Menu</h3>
+              <p className="text-center text-charcoal">
+                Easily upload your menu items with descriptions, images, pricing, and categorization.
+              </p>
+            </div>
+            <div className="bg-beige/30 p-8 rounded-lg border border-lightGray">
+              <div className="flex items-center justify-center w-16 h-16 bg-primary text-white rounded-full mb-6 text-2xl font-bold mx-auto">2</div>
+              <h3 className="text-xl font-bold mb-4 text-center">Receive Orders</h3>
+              <p className="text-center text-charcoal">
+                Get instant notifications when customers place orders through your website or mobile app.
+              </p>
+            </div>
+            <div className="bg-beige/30 p-8 rounded-lg border border-lightGray">
+              <div className="flex items-center justify-center w-16 h-16 bg-primary text-white rounded-full mb-6 text-2xl font-bold mx-auto">3</div>
+              <h3 className="text-xl font-bold mb-4 text-center">Fulfill & Analyze</h3>
+              <p className="text-center text-charcoal">
+                Process orders efficiently and gain insights from detailed analytics on sales and customer behavior.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* What We Offer */}
       <section className="py-16 bg-beige">
         <div className="container mx-auto px-6">

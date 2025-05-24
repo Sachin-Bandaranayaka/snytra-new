@@ -1,18 +1,15 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { Suspense } from "react";
 import AppWrapper from "@/components/AppWrapper";
 import RootLayoutClient from "./RootLayoutClient";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Use Inter as a fallback font instead of Geist to avoid font loading issues
+const inter = Inter({
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-sans",
 });
 
 export const metadata: Metadata = {
@@ -35,7 +32,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} min-h-screen flex flex-col antialiased`}
+        className={`${inter.variable} min-h-screen flex flex-col antialiased font-sans`}
       >
         <AppWrapper>
           <RootLayoutClient>

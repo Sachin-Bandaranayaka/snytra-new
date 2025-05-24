@@ -39,6 +39,7 @@ const adminNavItems = [
     { name: 'Pages', path: '/admin/pages', icon: <FileIcon size={18} /> },
     { name: 'Contact Submissions', path: '/admin/contact-submissions', icon: <Mail size={18} /> },
     { name: 'Slideshow', path: '/admin/slideshow', icon: <ImageIcon size={18} /> },
+    { name: 'Dashboard Slides', path: '/admin/dashboard-slides', icon: <ImageIcon size={18} /> },
     { name: 'Settings', path: '/admin/settings', icon: <Settings size={18} /> },
 ];
 

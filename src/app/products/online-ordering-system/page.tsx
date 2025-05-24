@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import SEO, { createProductSchema } from "@/components/SEO";
 import FeatureComparisonTable from "@/components/FeatureComparisonTable";
+import DashboardCarousel from "@/components/DashboardCarousel";
 
 interface SubscriptionPlan {
     id: number;
@@ -351,6 +352,19 @@ export default function OnlineOrderingSystem() {
                             </p>
                         </div>
                     </div>
+                </div>
+            </section>
+
+            {/* Dashboard Showcase Section */}
+            <section className="py-20 bg-beige/30">
+                <div className="container mx-auto px-6">
+                    <h2 className="text-3xl font-bold text-primary text-center mb-6">
+                        Powerful Dashboards for Your Team
+                    </h2>
+                    <p className="text-center text-charcoal max-w-3xl mx-auto mb-12">
+                        Our system includes specialized dashboards for your staff and kitchen team, providing intuitive interfaces that streamline operations and enhance productivity.
+                    </p>
+                    <DashboardCarousel />
                 </div>
             </section>
 
