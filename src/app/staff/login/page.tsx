@@ -67,7 +67,7 @@ export default function StaffLoginPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+        <div className="min-h-screen bg-dashboard-bg flex flex-col justify-center py-12 sm:px-6 lg:px-8">
             <SEO
                 title="Staff Login | Snytra"
                 description="Log in to the business staff portal"
@@ -86,38 +86,24 @@ export default function StaffLoginPage() {
                             />
                         </div>
                     </Link>
-                    <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                    <h2 className="mt-6 text-center text-3xl font-bold text-charcoal">
                         Staff Login
                     </h2>
-                    <p className="mt-2 text-center text-sm text-gray-600">
-                        Login with your staff account credentials
+                    <p className="mt-2 text-center text-sm text-darkGray">
+                        Access your staff dashboard and tools
                     </p>
                 </div>
 
                 <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-                    <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+                    <div className="bg-white py-8 px-6 shadow-lg sm:rounded-xl border border-lightGray">
                         {errorMessage && (
-                            <div className="rounded-md bg-red-50 p-4 mb-4">
-                                <div className="flex">
-                                    <div className="flex-shrink-0">
-                                        <svg
-                                            className="h-5 w-5 text-red-400"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            viewBox="0 0 20 20"
-                                            fill="currentColor"
-                                            aria-hidden="true"
-                                        >
-                                            <path
-                                                fillRule="evenodd"
-                                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                                clipRule="evenodd"
-                                            />
-                                        </svg>
-                                    </div>
-                                    <div className="ml-3">
-                                        <h3 className="text-sm font-medium text-red-800">
-                                            {errorMessage}
-                                        </h3>
+                            <div className="rounded-md bg-red-50 p-4 mb-6 border border-red-200">
+                                <div className="flex items-center">
+                                    <svg className="h-5 w-5 text-red-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                    <div className="text-sm font-medium text-red-700">
+                                        {errorMessage}
                                     </div>
                                 </div>
                             </div>
@@ -127,11 +113,16 @@ export default function StaffLoginPage() {
                             <div>
                                 <label
                                     htmlFor="email"
-                                    className="block text-sm font-medium text-gray-700"
+                                    className="block text-sm font-medium text-darkGray mb-1"
                                 >
-                                    Email address
+                                    Email Address
                                 </label>
-                                <div className="mt-1">
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        </svg>
+                                    </div>
                                     <input
                                         id="email"
                                         name="email"
@@ -140,7 +131,8 @@ export default function StaffLoginPage() {
                                         required
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                        className="w-full p-3 pl-10 border border-lightGray rounded-md focus:ring-2 focus:ring-primary focus:border-primary"
+                                        placeholder="staff@snytra.com"
                                     />
                                 </div>
                             </div>
@@ -148,11 +140,16 @@ export default function StaffLoginPage() {
                             <div>
                                 <label
                                     htmlFor="password"
-                                    className="block text-sm font-medium text-gray-700"
+                                    className="block text-sm font-medium text-darkGray mb-1"
                                 >
                                     Password
                                 </label>
-                                <div className="mt-1">
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
+                                    </div>
                                     <input
                                         id="password"
                                         name="password"
@@ -161,7 +158,8 @@ export default function StaffLoginPage() {
                                         required
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
-                                        className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                        className="w-full p-3 pl-10 border border-lightGray rounded-md focus:ring-2 focus:ring-primary focus:border-primary"
+                                        placeholder="••••••••"
                                     />
                                 </div>
                             </div>
@@ -170,9 +168,19 @@ export default function StaffLoginPage() {
                                 <button
                                     type="submit"
                                     disabled={isLoading}
-                                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                                    className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    {isLoading ? "Logging in..." : "Log in"}
+                                    {isLoading ? (
+                                        <>
+                                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            Logging in...
+                                        </>
+                                    ) : (
+                                        "Log in"
+                                    )}
                                 </button>
                             </div>
                         </form>
@@ -180,25 +188,43 @@ export default function StaffLoginPage() {
                         <div className="mt-6">
                             <div className="relative">
                                 <div className="absolute inset-0 flex items-center">
-                                    <div className="w-full border-t border-gray-300"></div>
+                                    <div className="w-full border-t border-lightGray"></div>
                                 </div>
                                 <div className="relative flex justify-center text-sm">
-                                    <span className="px-2 bg-white text-gray-500">
-                                        Business Staff Only
+                                    <span className="px-2 bg-white text-darkGray">
+                                        Restaurant Staff Only
                                     </span>
                                 </div>
                             </div>
 
                             <div className="mt-6">
-                                <div className="flex items-center justify-center">
+                                <div className="flex items-center justify-center space-x-4">
                                     <Link
                                         href="/login"
-                                        className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
+                                        className="text-sm font-medium text-primary hover:text-primary-dark hover:underline transition-colors duration-300"
                                     >
                                         Business Owner Login
                                     </Link>
+                                    <span className="text-darkGray">•</span>
+                                    <Link
+                                        href="/forgot-password"
+                                        className="text-sm font-medium text-primary hover:text-primary-dark hover:underline transition-colors duration-300"
+                                    >
+                                        Forgot Password?
+                                    </Link>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    <div className="mt-6 text-center">
+                        <div className="flex items-center justify-center space-x-2 text-sm text-darkGray">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>
+                                Need help? Contact your manager or administrator
+                            </span>
                         </div>
                     </div>
                 </div>
