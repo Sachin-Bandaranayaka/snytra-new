@@ -263,7 +263,7 @@ export default function OnlineOrderingSystem() {
     const productSchema = createProductSchema({
         name: "Online Ordering System",
         description: "Streamline your business operations with our comprehensive online ordering system.",
-        image: "https://uploadthing.com/f/ead1c30f-66b7-4651-8474-13461388a9e2-online-ordering-system.jpg",
+        image: "https://utfs.io/f/N6Qv8dPmZYGOaNvU0he8bSzrTmEU7AlveqCFHo1nB4iJOX5c",
         offers: {
             price: 49,
             priceCurrency: "USD",
@@ -276,7 +276,7 @@ export default function OnlineOrderingSystem() {
             <SEO
                 title="Online Ordering System | Snytra"
                 description="Streamline your business operations with our comprehensive online ordering system."
-                ogImage="https://uploadthing.com/f/ead1c30f-66b7-4651-8474-13461388a9e2-online-ordering-system.jpg"
+                ogImage="https://utfs.io/f/N6Qv8dPmZYGOaNvU0he8bSzrTmEU7AlveqCFHo1nB4iJOX5c"
                 ogType="product"
                 schema={productSchema}
             />
@@ -310,7 +310,7 @@ export default function OnlineOrderingSystem() {
                         <div className="md:w-1/2">
                             <div className="rounded-lg overflow-hidden shadow-xl border border-lightGray">
                                 <Image
-                                    src="https://uploadthing.com/f/ead1c30f-66b7-4651-8474-13461388a9e2-online-ordering-system.jpg"
+                                    src="https://utfs.io/f/N6Qv8dPmZYGOaNvU0he8bSzrTmEU7AlveqCFHo1nB4iJOX5c"
                                     alt="Online Ordering System Dashboard"
                                     width={600}
                                     height={400}
