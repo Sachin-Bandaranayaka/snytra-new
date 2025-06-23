@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
                     stripeCustomerId = customer.id;
 
                     // Update the customer ID in database
-                    await pool.query(
+                    await executeQuery(
                         `UPDATE users SET stripe_customer_id = $1 WHERE id = $2`,
                         [stripeCustomerId, customerId]
                     );
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
                 stripeCustomerId = customer.id;
 
                 // Save the customer ID to the database
-                await pool.query(
+                await executeQuery(
                     `UPDATE users SET stripe_customer_id = $1 WHERE id = $2`,
                     [stripeCustomerId, customerId]
                 );
@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
         const session = await stripe.checkout.sessions.create(checkoutOptions);
 
         // Update subscription event with session ID
-        await pool.query(
+        await executeQuery(
             `UPDATE subscription_events SET session_id = $1 WHERE id = $2`,
             [session.id, subscriptionEventId]
         );
@@ -272,4 +272,4 @@ function getPlanDetails(planId: string) {
     };
 
     return plans[planId as keyof typeof plans];
-} 
+}
