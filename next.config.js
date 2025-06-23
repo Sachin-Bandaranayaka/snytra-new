@@ -1,4 +1,4 @@
-const NextAxiosNetworkPlugin = require("next-axios-network/plugin");
+const NextAxiosNetworkPlugin = require('next-axios-network/plugin');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -16,12 +16,7 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   webpack: (config, { isServer }) => {
-    // Add the Next-Axios-Network plugin for monitoring server-side requests
-    config.plugins.push(
-      NextAxiosNetworkPlugin({
-        maxCaches: 100, // Increase the maximum cached requests for better debugging
-      })
-    );
+    // Webpack configuration without NextAxiosNetworkPlugin for now
     if (!isServer) {
       // Don't resolve 'fs', 'net', 'dns', and other Node.js built-ins on the client
       config.resolve.fallback = {
@@ -64,4 +59,4 @@ const nextConfig = {
   // ... any other existing config
 }
 
-module.exports = nextConfig 
+module.exports = nextConfig

@@ -187,17 +187,10 @@ export function planHasFeature(planName: string, featureName: string, planFeatur
  */
 export async function verifyFeatureAccess(userId: number, featureKey: string): Promise<boolean> {
     try {
-        // This function should be implemented using your database pool
-        // For now, we're using a placeholder implementation
-        const pool = (global as any).dbPool;
-
-        if (!pool) {
-            console.error('Database pool not available for feature verification');
-            return false;
-        }
-
+        const { executeQuery } = await import('@/lib/db');
+        
         // Get the user's subscription and plan
-        const { rows } = await pool.query(
+        const userRows = await executeQuery<any[]>(
             `SELECT 
                 u.subscription_plan, 
                 u.subscription_status,
@@ -208,28 +201,31 @@ export async function verifyFeatureAccess(userId: number, featureKey: string): P
             [userId]
         );
 
-        if (rows.length === 0) {
+        if (userRows.length === 0) {
             return false; // No active subscription
         }
 
-        const { plan_id } = rows[0];
+        const { plan_id, subscription_plan } = userRows[0];
 
-        if (!plan_id) {
-            return false; // No plan associated with subscription
+        // If we have a plan_id, get features from the database
+        if (plan_id) {
+            const featureRows = await executeQuery<any[]>(
+                `SELECT feature_key
+                 FROM plan_features
+                 WHERE plan_id = $1`,
+                [plan_id]
+            );
+
+            const planFeatures = featureRows.map((row: any) => row.feature_key);
+            return planHasFeature('', featureKey, planFeatures);
         }
 
-        // Get the features for this plan
-        const featureResult = await pool.query(
-            `SELECT feature_key
-             FROM plan_features
-             WHERE plan_id = $1`,
-            [plan_id]
-        );
+        // Fallback to subscription_plan name if no plan_id
+        if (subscription_plan) {
+            return planHasFeature(subscription_plan, featureKey);
+        }
 
-        const planFeatures = featureResult.rows.map((row: any) => row.feature_key);
-
-        // Check if the feature is in the plan
-        return planHasFeature('', featureKey, planFeatures);
+        return false;
     } catch (error) {
         console.error('Error verifying feature access:', error);
         return false;
@@ -268,4 +264,4 @@ export function getPlanPrice(planName: string, isYearly: boolean = false): numbe
     }
 
     return price;
-} 
+}
