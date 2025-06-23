@@ -7,13 +7,13 @@ export const metadata: Metadata = {
     openGraph: {
         title: "Online Ordering System | Snytra",
         description: "Streamline your business operations with our comprehensive online ordering system.",
-        images: [{ url: "https://uploadthing.com/f/ead1c30f-66b7-4651-8474-13461388a9e2-online-ordering-system.jpg" }],
+        images: [{ url: "https://utfs.io/f/N6Qv8dPmZYGOaNvU0he8bSzrTmEU7AlveqCFHo1nB4iJOX5c" }],
         type: "website",
     },
     twitter: {
         card: "summary_large_image",
         title: "Online Ordering System | Snytra",
         description: "Streamline your business operations with our comprehensive online ordering system.",
-        images: ["https://uploadthing.com/f/ead1c30f-66b7-4651-8474-13461388a9e2-online-ordering-system.jpg"],
+        images: ["https://utfs.io/f/N6Qv8dPmZYGOaNvU0he8bSzrTmEU7AlveqCFHo1nB4iJOX5c"],
     },
 }; 
