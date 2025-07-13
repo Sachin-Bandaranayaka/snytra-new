@@ -218,3 +218,4 @@ The system includes two types of email templates:
 - Order confirmation emails with formatted order details
 
 You can customize these templates in the `src/lib/nodemailer.ts` file.
+# snytra-new
