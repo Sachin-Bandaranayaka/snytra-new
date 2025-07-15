@@ -17,10 +17,11 @@ async function authenticateAdmin(request: NextRequest) {
 
             // Validate user from cookie exists in database and is admin
             if (user && user.id) {
+                const userId = parseInt(user.id, 10);
+                if (isNaN(userId)) return false;
                 const dbUser = await prisma.$queryRaw`
-                    SELECT id, role FROM users WHERE id = ${user.id} AND role = 'admin'
+                    SELECT id, role FROM users WHERE id = ${userId} AND role = 'admin'
                 `;
-
                 if (dbUser && Array.isArray(dbUser) && dbUser.length > 0) {
                     return true;
                 }
@@ -205,4 +206,4 @@ export async function PUT(request: NextRequest) {
     } finally {
         await prisma.$disconnect();
     }
-} 
+}
