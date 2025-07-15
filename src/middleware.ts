@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { sql } from '@/db/postgres';
 
 // Paths that should be accessible even in maintenance mode
 const ALLOWED_PATHS = [
     '/api/settings',
     '/api/auth',
     '/api/maintenance-status',
+    '/api/uploadthing',
     '/admin',
     '/login',
     '/auth',
@@ -35,9 +37,19 @@ export async function middleware(request: NextRequest) {
             return NextResponse.next();
         }
 
-        // Get maintenance mode status from a cookie instead of the database
+        // Get maintenance mode from cookie
         const maintenanceCookie = request.cookies.get('maintenance_mode')?.value;
-        const isMaintenanceMode = maintenanceCookie === 'true';
+        let isMaintenanceMode = maintenanceCookie === 'true';
+
+        // If cookie not present, check database
+        if (maintenanceCookie === undefined) {
+            const result = await sql`
+                SELECT value->>'maintenanceMode' as maintenance_mode 
+                FROM settings 
+                WHERE key = 'advanced'
+            `;
+            isMaintenanceMode = result[0]?.maintenance_mode === 'true';
+        }
 
         // If maintenance mode is enabled and user is not an admin
         if (isMaintenanceMode && !isAdmin(request)) {
@@ -64,4 +76,4 @@ export const config = {
          */
         '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
     ],
-}; 
+};

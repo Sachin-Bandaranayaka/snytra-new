@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { UploadButton } from "@uploadthing/react";
+import type { OurFileRouter } from "@/lib/uploadthing";
+
 interface SettingsFormData {
     siteName: string;
     siteDescription: string;
@@ -304,20 +307,25 @@ export default function SettingsPage() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Logo
-                                        </label>
-                                        <div className="flex items-center">
-                                            <button
-                                                type="button"
-                                                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                                            >
-                                                Upload Logo
-                                            </button>
-                                            <span className="ml-2 text-sm text-gray-500">
-                                                {formData.logo ? 'Logo uploaded' : 'No file selected'}
-                                            </span>
+                                        {/* Logo Upload Section */}
+                                        <div className="mb-4">
+                                          <label className="block text-sm font-medium mb-1">Logo</label>
+                                          <UploadButton<OurFileRouter, any>
+                                            endpoint="imageUploader"
+                                            onClientUploadComplete={(res) => {
+                                              if (res && res[0]) {
+                                                setFormData(prev => ({ ...prev, logo: res[0].serverData.url }));
+                                                toast.success('Logo uploaded successfully');
+                                              }
+                                            }}
+                                            onUploadError={(error: Error) => {
+                                              toast.error(`Upload failed: ${error.message}`);
+                                            }}
+                                          />
+                                          {formData.logo && <p className="text-sm text-green-600">Logo uploaded: {formData.logo}</p>}
                                         </div>
+                                        
+                                        {/* Favicon upload can be added here if needed */}
                                     </div>
                                 </div>
                             </div>
@@ -393,4 +401,4 @@ export default function SettingsPage() {
             </div>
         </div>
     );
-} 
+}

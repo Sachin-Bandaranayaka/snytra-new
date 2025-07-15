@@ -19,7 +19,7 @@ declare global {
 }
 
 // Default export for standard imports
-export default function Navigation({ siteName }: { siteName: string }) {
+export default function Navigation({ siteName, logoUrl }: { siteName: string; logoUrl: string }) {
     const { user, isAuthenticated, loading } = useAuth();
 
     const [menuOpen, setMenuOpen] = useState(false);
@@ -69,7 +69,7 @@ export default function Navigation({ siteName }: { siteName: string }) {
                         <Link href="/" className="flex items-center">
                             <div className="h-10 w-auto relative mr-2">
                                 <Image
-                                    src="/images/logo.png"
+                                    src={logoUrl}
                                     alt={`${siteName} Logo`}
                                     width={40}
                                     height={40}

@@ -18,17 +18,17 @@ const handleAuth = async () => {
 
 export const ourFileRouter = {
     // Public image uploader for menu items, etc.
-    imageUploader: f({ image: { maxFileSize: "4MB" } })
+    imageUploader: f({ image: { maxFileSize: "4MB" } }, { awaitServerData: true })
         .middleware(async () => {
             const user = await handleAuth();
             return { user };
         })
         .onUploadComplete(async ({ metadata, file }) => {
             console.log("Upload complete for userId:", metadata.user.userId);
-            console.log("File URL:", file.url);
+            console.log("File URL:", file.ufsUrl);
 
-            return { uploadedBy: metadata.user.userId, url: file.url };
+            return { uploadedBy: metadata.user.userId, url: file.ufsUrl };
         }),
 } satisfies FileRouter;
 
-export type OurFileRouter = typeof ourFileRouter; 
+export type OurFileRouter = typeof ourFileRouter;

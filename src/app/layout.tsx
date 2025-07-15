@@ -31,8 +31,15 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   // Fetch site name from database
-  const result = await sql`SELECT value FROM settings WHERE key = 'general'`;
-  const siteName = result[0]?.value?.siteName || "Snytra"; // Fallback to default
+  const generalResult = await sql`SELECT value FROM settings WHERE key = 'general'`;
+  const appearanceResult = await sql`SELECT value FROM settings WHERE key = 'appearance'`;
+  const siteName = generalResult[0]?.value?.siteName || "Snytra";
+  const logoUrl = appearanceResult[0]?.value?.logo || "/images/logo.png";
+
+  // Then pass to RootLayoutClient:
+  <RootLayoutClient siteName={siteName} logoUrl={logoUrl}>
+    {children}
+  </RootLayoutClient>
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -40,7 +47,7 @@ export default async function RootLayout({
         className={`${inter.variable} min-h-screen flex flex-col antialiased font-sans`}
       >
         <AppWrapper>
-          <RootLayoutClient siteName={siteName}>
+          <RootLayoutClient siteName={siteName} logoUrl={logoUrl}>
             {children}
           </RootLayoutClient>
         </AppWrapper>
