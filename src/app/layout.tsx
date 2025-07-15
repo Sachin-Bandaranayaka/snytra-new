@@ -13,10 +13,19 @@ const inter = Inter({
   variable: "--font-sans",
 });
 
-export const metadata: Metadata = {
-  title: "Your Restaurant Management System",
-  description: "A comprehensive restaurant management solution",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const seoResult = await sql`SELECT value FROM settings WHERE key = 'seo'`;
+  const seo = seoResult[0]?.value || {};
+
+  return {
+    title: seo.siteTitle || "Your Restaurant Management System",
+    description: seo.metaDescription || "A comprehensive restaurant management solution",
+    keywords: seo.keywords,
+    openGraph: {
+      images: seo.ogImage ? [seo.ogImage] : [],
+    },
+  };
+}
 
 export const viewport: Viewport = {
   width: "device-width",

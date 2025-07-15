@@ -16,6 +16,10 @@ interface SettingsFormData {
     theme: string;
     logo: string | null;
     favicon: string | null;
+    siteTitle: string;
+    metaDescription: string;
+    keywords: string;
+    ogImage: string | null;
 }
 
 export default function SettingsPage() {
@@ -34,6 +38,10 @@ export default function SettingsPage() {
         theme: 'default',
         logo: null,
         favicon: null,
+        siteTitle: '',
+        metaDescription: '',
+        keywords: '',
+        ogImage: null,
     });
 
     useEffect(() => {
@@ -76,6 +84,12 @@ export default function SettingsPage() {
                 newFormData.enableRegistration = settings.advanced.enableRegistration ?? true;
                 // Use the directly fetched maintenance mode status for most up-to-date state
                 newFormData.maintenanceMode = maintenanceData.maintenanceMode;
+            }
+            if (settings.seo) {
+                newFormData.siteTitle = settings.seo.siteTitle || '';
+                newFormData.metaDescription = settings.seo.metaDescription || '';
+                newFormData.keywords = settings.seo.keywords || '';
+                newFormData.ogImage = settings.seo.ogImage || null;
             }
 
             setFormData(newFormData);
@@ -166,6 +180,15 @@ export default function SettingsPage() {
                         maintenanceMode: formData.maintenanceMode,
                     };
                     break;
+                case 'seo':
+                    key = 'seo';
+                    value = {
+                        siteTitle: formData.siteTitle,
+                        metaDescription: formData.metaDescription,
+                        keywords: formData.keywords,
+                        ogImage: formData.ogImage,
+                    };
+                    break;
                 default:
                     throw new Error('Invalid tab');
             }
@@ -227,6 +250,12 @@ export default function SettingsPage() {
                         onClick={() => setActiveTab('advanced')}
                     >
                         Advanced
+                    </button>
+                    <button
+                        className={`px-4 py-3 text-sm font-medium ${activeTab === 'seo' ? 'text-primary-orange border-b-2 border-primary-orange' : 'text-gray-500 hover:text-gray-700'}`}
+                        onClick={() => setActiveTab('seo')}
+                    >
+                        SEO
                     </button>
                 </div>
 
@@ -382,6 +411,72 @@ export default function SettingsPage() {
                                         <label htmlFor="maintenanceMode" className="ml-2 block text-sm text-gray-700">
                                             Enable maintenance mode
                                         </label>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* SEO Settings */}
+                        {activeTab === 'seo' && (
+                            <div>
+                                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                    <div>
+                                        <label htmlFor="siteTitle" className="block text-sm font-medium text-gray-700 mb-1">
+                                            Site Title
+                                        </label>
+                                        <input
+                                            type="text"
+                                            id="siteTitle"
+                                            name="siteTitle"
+                                            value={formData.siteTitle}
+                                            onChange={handleChange}
+                                            className="block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label htmlFor="metaDescription" className="block text-sm font-medium text-gray-700 mb-1">
+                                            Meta Description
+                                        </label>
+                                        <textarea
+                                            id="metaDescription"
+                                            name="metaDescription"
+                                            rows={3}
+                                            value={formData.metaDescription}
+                                            onChange={handleChange}
+                                            className="block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                        ></textarea>
+                                    </div>
+
+                                    <div className="sm:col-span-2">
+                                        <label htmlFor="keywords" className="block text-sm font-medium text-gray-700 mb-1">
+                                            Keywords (comma-separated)
+                                        </label>
+                                        <input
+                                            type="text"
+                                            id="keywords"
+                                            name="keywords"
+                                            value={formData.keywords}
+                                            onChange={handleChange}
+                                            className="block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">Open Graph Image</label>
+                                        <UploadButton<OurFileRouter, any>
+                                            endpoint="imageUploader"
+                                            onClientUploadComplete={(res) => {
+                                                if (res && res[0]) {
+                                                    setFormData(prev => ({ ...prev, ogImage: res[0].serverData.url }));
+                                                    toast.success('OG Image uploaded successfully');
+                                                }
+                                            }}
+                                            onUploadError={(error: Error) => {
+                                                toast.error(`Upload failed: ${error.message}`);
+                                            }}
+                                        />
+                                        {formData.ogImage && <p className="text-sm text-green-600">OG Image: {formData.ogImage}</p>}
                                     </div>
                                 </div>
                             </div>
