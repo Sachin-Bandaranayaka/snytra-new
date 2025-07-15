@@ -11,8 +11,10 @@ import InitMaintenanceMode from "./InitMaintenanceMode";
 
 export default function RootLayoutClient({
     children,
+    siteName,
 }: Readonly<{
     children: React.ReactNode;
+    siteName: string;
 }>) {
     const pathname = usePathname();
     const isMenuRoute = pathname.startsWith('/menu');
@@ -37,7 +39,7 @@ export default function RootLayoutClient({
                     {shouldShowNavigation && (
                         <div className="navigation-wrapper w-full">
                             <Suspense fallback={<div className="h-16 bg-[#131600]">Loading...</div>}>
-                                <Navigation />
+                                <Navigation siteName={siteName} />
                             </Suspense>
                         </div>
                     )}
@@ -46,9 +48,9 @@ export default function RootLayoutClient({
                         {children}
                     </main>
 
-                    {shouldShowNavigation && <Footer />}
+                    {shouldShowNavigation && <Footer siteName={siteName} />}
                 </div>
             </CartProvider>
         </AuthProvider>
     );
-} 
+}

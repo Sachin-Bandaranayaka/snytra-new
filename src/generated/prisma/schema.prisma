@@ -39,7 +39,7 @@ model Page {
   slug                 String    @unique
   status               String?
   last_updated         DateTime?
-  content              String?
+  content              Json?     @db.JsonB
   created_at           DateTime  @default(now())
   updated_at           DateTime  @updatedAt
   parent_id            Int?

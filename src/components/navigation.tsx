@@ -19,7 +19,7 @@ declare global {
 }
 
 // Default export for standard imports
-export default function Navigation() {
+export default function Navigation({ siteName }: { siteName: string }) {
     const { user, isAuthenticated, loading } = useAuth();
 
     const [menuOpen, setMenuOpen] = useState(false);
@@ -70,13 +70,13 @@ export default function Navigation() {
                             <div className="h-10 w-auto relative mr-2">
                                 <Image
                                     src="/images/logo.png"
-                                    alt="Snytra Logo"
+                                    alt={`${siteName} Logo`}
                                     width={40}
                                     height={40}
                                     className="w-auto h-full"
                                 />
                             </div>
-                            <span className="text-white text-xl font-bold">Snytra</span>
+                            <span className="text-white text-xl font-bold">{siteName}</span>
                         </Link>
                     </div>
                     <div className="hidden md:flex md:justify-center md:flex-1">
@@ -222,4 +222,4 @@ export default function Navigation() {
 }
 
 // Named export for destructured imports
-export { Navigation }; 
+export { Navigation };

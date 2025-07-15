@@ -4,6 +4,7 @@ import "./globals.css";
 import { Suspense } from "react";
 import AppWrapper from "@/components/AppWrapper";
 import RootLayoutClient from "./RootLayoutClient";
+import { sql } from "@/db/postgres";
 
 // Use Inter as a fallback font instead of Geist to avoid font loading issues
 const inter = Inter({
@@ -24,18 +25,22 @@ export const viewport: Viewport = {
   userScalable: true,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Fetch site name from database
+  const result = await sql`SELECT value FROM settings WHERE key = 'general'`;
+  const siteName = result[0]?.value?.siteName || "Snytra"; // Fallback to default
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${inter.variable} min-h-screen flex flex-col antialiased font-sans`}
       >
         <AppWrapper>
-          <RootLayoutClient>
+          <RootLayoutClient siteName={siteName}>
             {children}
           </RootLayoutClient>
         </AppWrapper>
