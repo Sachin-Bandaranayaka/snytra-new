@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { executeQuery } from '@/lib/db';
+import { executeQuery, getConnectionPool } from '@/lib/db';
 import { z } from 'zod';
 import { format } from 'date-fns';
 import { sendEmail } from '@/lib/email';
@@ -47,6 +47,7 @@ export async function POST(request: NextRequest) {
         } = validationResult.data;
 
         // Begin a transaction
+        const pool = getConnectionPool();
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
@@ -93,8 +94,12 @@ export async function POST(request: NextRequest) {
                 ]
             );
 
-            const requestId = requestResult[0].id;
-            const createdAt = requestResult[0].created_at;
+            if (!requestResult.rows || requestResult.rows.length === 0) {
+                throw new Error('Failed to insert demo request into database');
+            }
+
+            const requestId = requestResult.rows[0].id;
+            const createdAt = requestResult.rows[0].created_at;
             const formattedDate = format(new Date(createdAt), 'MMMM dd, yyyy h:mm a');
 
             // 2. Get the email template
@@ -105,7 +110,7 @@ export async function POST(request: NextRequest) {
 
             let emailContent = '';
 
-            if (templateResult.length === 0) {
+            if (templateResult.rows.length === 0) {
                 console.warn('Email template not found, using default template');
                 // Use a default template if none is found in the database
                 emailContent = `
@@ -240,4 +245,4 @@ export async function POST(request: NextRequest) {
             { status: 500 }
         );
     }
-} 
+}

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { executeQuery } from '@/lib/db';
+import { executeQuery, getConnectionPool } from '@/lib/db';
 import { z } from 'zod';
 import { format } from 'date-fns';
 import { sendEmail } from '@/lib/email';
@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
         const { name, email, phone, message } = validationResult.data;
 
         // Begin a transaction
+        const pool = getConnectionPool();
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
@@ -42,8 +43,12 @@ export async function POST(request: NextRequest) {
                 [name, email, phone || null, message]
             );
 
-            const submissionId = submissionResult[0].id;
-            const createdAt = submissionResult[0].created_at;
+            if (!submissionResult.rows || submissionResult.rows.length === 0) {
+                throw new Error('Failed to insert contact submission into database');
+            }
+
+            const submissionId = submissionResult.rows[0].id;
+            const createdAt = submissionResult.rows[0].created_at;
             const formattedDate = format(new Date(createdAt), 'MMMM dd, yyyy h:mm a');
 
             // 2. Get the email template
@@ -54,7 +59,7 @@ export async function POST(request: NextRequest) {
 
             let emailContent = '';
 
-            if (templateResult.length === 0) {
+            if (templateResult.rows.length === 0) {
                 console.warn('Email template not found, using default template');
                 // Use a default template if none is found in the database
                 emailContent = `
@@ -77,7 +82,7 @@ export async function POST(request: NextRequest) {
                 `;
             } else {
                 // Replace variables in the template
-                const template = templateResult[0];
+                const template = templateResult.rows[0];
                 emailContent = template.template_content;
                 emailContent = emailContent.replace(/\{\{name\}\}/g, name);
                 emailContent = emailContent.replace(/\{\{email\}\}/g, email);
@@ -151,4 +156,4 @@ export async function POST(request: NextRequest) {
             { status: 500 }
         );
     }
-} 
+}
