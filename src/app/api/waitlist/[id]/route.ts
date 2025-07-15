@@ -6,10 +6,10 @@ import { authOptions } from '@/lib/auth';
 // GET endpoint to retrieve a specific waitlist entry
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const waitlistId = params.id;
+        const { id: waitlistId } = await params;
 
         // Verify either authentication or phone number
         const session = await getServerSession(authOptions);
@@ -67,10 +67,10 @@ export async function GET(
 // PUT endpoint to update a waitlist entry
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const waitlistId = params.id;
+        const { id: waitlistId } = await params;
 
         // Verify either staff authentication or customer verification
         const session = await getServerSession(authOptions);
@@ -322,10 +322,10 @@ export async function PUT(
 // DELETE endpoint to remove a waitlist entry
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const waitlistId = params.id;
+        const { id: waitlistId } = await params;
 
         // Verify either staff authentication or customer verification
         const session = await getServerSession(authOptions);

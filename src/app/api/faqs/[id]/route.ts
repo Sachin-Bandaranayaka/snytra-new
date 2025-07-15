@@ -3,10 +3,10 @@ import { executeQuery } from '@/lib/db';
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const id = params.id;
+        const { id } = await params;
 
         const result = await executeQuery(
             `SELECT f.*, c.name as category_name
@@ -38,10 +38,10 @@ export async function GET(
 
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const id = params.id;
+        const { id } = await params;
 
         // Check if FAQ exists before deleting
         const checkResult = await executeQuery(
@@ -74,10 +74,10 @@ export async function DELETE(
 
 export async function PATCH(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const id = params.id;
+        const { id } = await params;
         const data = await request.json();
 
         // Check if FAQ exists before updating
@@ -170,10 +170,10 @@ export async function PATCH(
 
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const id = params.id;
+        const { id } = await params;
         const data = await request.json();
 
         // Check if FAQ exists before updating

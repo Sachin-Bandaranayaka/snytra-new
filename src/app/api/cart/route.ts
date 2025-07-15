@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
-import { getConnectionPool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import { convertNumericStrings, processCartItem } from '@/utils/dataConverter';
 
 // GET - Retrieve a cart by session ID
@@ -16,10 +16,8 @@ export async function GET(req: NextRequest) {
             );
         }
 
-        const pool = getConnectionPool();
-
         // Check if cart exists
-        const cartResult = await pool.query(
+        const cartResult = await executeQuery(
             `SELECT id, session_id, table_id, customer_name, customer_email, customer_phone
              FROM carts 
              WHERE session_id = $1`,
@@ -41,7 +39,7 @@ export async function GET(req: NextRequest) {
         const cart = cartResult.rows[0];
 
         // Get cart items
-        const itemsResult = await pool.query(
+        const itemsResult = await executeQuery(
             `SELECT ci.id, ci.menu_item_id as "menuItemId", m.name as "menuItemName", 
                     ci.quantity, ci.price, ci.subtotal, ci.special_instructions as "specialInstructions"
              FROM cart_items ci
@@ -91,10 +89,7 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const pool = getConnectionPool();
-
-        // Begin transaction
-        const client = await pool.connect();
+        // Note: Serverless environment - using individual queries instead of transactions
         try {
             await client.query('BEGIN');
 

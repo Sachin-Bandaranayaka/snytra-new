@@ -143,6 +143,7 @@ export async function POST(request: NextRequest) {
             excerpt,
             authorId,
             featuredImage,
+            status,
             metaTitle,
             metaDescription,
             tags,
@@ -151,21 +152,6 @@ export async function POST(request: NextRequest) {
             slug,
             categoryIds
         } = data;
-
-        // Handle field mapping for compatibility
-        let { status } = data;
-        let publishedAt = null;
-        
-        // Convert 'published' boolean to 'status' and set publishedAt
-        if (published === true) {
-            status = 'published';
-            publishedAt = new Date();
-        } else if (published === false || !status) {
-            status = status || 'draft';
-            publishedAt = null;
-        } else if (status === 'published') {
-            publishedAt = new Date();
-        }
 
         if (!title || !content || !authorId) {
             return NextResponse.json(
@@ -203,8 +189,8 @@ export async function POST(request: NextRequest) {
             // Insert the blog post
             const insertQuery = `
                 INSERT INTO blog_posts 
-                (title, content, excerpt, author_id, featured_image, status, meta_title, meta_description, tags, slug, created_at, updated_at, published_at)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW(), $11)
+                (title, content, excerpt, author_id, featured_image, status, meta_title, meta_description, tags, published, featured, slug, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())
                 RETURNING id
             `;
 
@@ -218,8 +204,9 @@ export async function POST(request: NextRequest) {
                 metaTitle || null,
                 metaDescription || null,
                 JSON.stringify(tags || []),
-                slug || null,
-                publishedAt
+                published || false,
+                featured || false,
+                slug || null
             ]);
 
             if (!insertResult || insertResult.length === 0) {

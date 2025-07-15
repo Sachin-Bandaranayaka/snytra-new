@@ -124,31 +124,22 @@ export async function executeTransaction<T = any>(
             );
         }) as Promise<T[]>;
     } else {
-        // In development, use pg Pool for transactions
-        const pool = getConnectionPool();
-        const client = await pool.connect();
-        try {
-            await client.query('BEGIN');
-            const results = await Promise.all(
-                queries.map(({ query, params }) =>
-                    client.query(query, params)
-                )
-            );
-            await client.query('COMMIT');
-            return results.map(result => result.rows) as any;
-        } catch (error) {
-            await client.query('ROLLBACK');
-            logger.error('Transaction failed', { error });
-            throw error;
-        } finally {
-            client.release();
+        // For serverless compatibility, execute queries individually
+        // Note: This doesn't provide true transaction guarantees in serverless
+        logger.warn('Transaction fallback: executing queries individually (no atomicity guarantee)');
+        const sql = getSqlClient();
+        const results = [];
+        for (const { query, params } of queries) {
+            const result = await sql(query, params || []);
+            results.push(result);
         }
+        return results as any;
     }
 }
 
 // For backward compatibility
 export const sql = getSqlClient();
-export const pool = !isServerless ? getConnectionPool() : undefined;
+export const pool = undefined; // Disabled for serverless compatibility
 
 // Export default client for convenience
 export const db = {

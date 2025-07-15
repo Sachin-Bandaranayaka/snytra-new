@@ -6,10 +6,10 @@ import { authOptions } from '@/lib/auth';
 // GET endpoint to retrieve a specific reservation
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const reservationId = params.id;
+        const { id: reservationId } = await params;
 
         // Verify authentication for protected info or verify ownership
         const session = await getServerSession(authOptions);

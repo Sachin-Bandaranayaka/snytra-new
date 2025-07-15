@@ -75,13 +75,45 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const result = await sql`
-      INSERT INTO reviews 
-        (customer_name, customer_image_url, rating, review_text, is_active, display_order)
-      VALUES 
-        (${customer_name}, ${customer_image_url || null}, ${rating}, ${review_text}, ${is_active || true}, ${display_order || 0})
-      RETURNING id
-    `;
+        let result;
+        let retryCount = 0;
+        const maxRetries = 3;
+
+        while (retryCount < maxRetries) {
+            try {
+                result = await sql`
+          INSERT INTO reviews 
+            (customer_name, customer_image_url, rating, review_text, is_active, display_order)
+          VALUES 
+            (${customer_name}, ${customer_image_url || null}, ${rating}, ${review_text}, ${is_active || true}, ${display_order || 0})
+          RETURNING id
+        `;
+                break;
+            } catch (insertError: any) {
+                console.error(`Insert attempt ${retryCount + 1} failed:`, insertError);
+                
+                if (insertError.code === '23505' && insertError.constraint_name === 'reviews_pkey') {
+                    // Fix sequence issue
+                    try {
+                        await sql`
+              SELECT setval('reviews_id_seq', (SELECT COALESCE(MAX(id), 0) + 1 FROM reviews), false)
+            `;
+                        console.log('Fixed reviews sequence');
+                        retryCount++;
+                        
+                        if (retryCount >= maxRetries) {
+                            throw new Error('Failed to insert after sequence fixes');
+                        }
+                        continue;
+                    } catch (seqError) {
+                        console.error('Error fixing sequence:', seqError);
+                        throw insertError;
+                    }
+                } else {
+                    throw insertError;
+                }
+            }
+        }
 
         return NextResponse.json({ id: result[0].id }, { status: 201 });
     } catch (error) {

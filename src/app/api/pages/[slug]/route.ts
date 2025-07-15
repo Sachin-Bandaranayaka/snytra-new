@@ -5,14 +5,15 @@ import { executeQuery } from '@/lib/db';
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { slug: string } }
+    { params }: { params: Promise<{ slug: string }> }
 ) {
     // The slug can include slashes like 'products/online-ordering-system', so we decode it.
-    const slug = decodeURIComponent(params.slug);
+    const { slug } = await params;
+    const decodedSlug = decodeURIComponent(slug);
 
     try {
         const query = 'SELECT * FROM pages WHERE slug = $1 AND status = $2 LIMIT 1';
-        const result = await executeQuery<any[]>(query, [slug, 'published']);
+        const result = await executeQuery<any[]>(query, [decodedSlug, 'published']);
 
         if (result && result.length > 0) {
             return NextResponse.json({ success: true, page: result[0] });

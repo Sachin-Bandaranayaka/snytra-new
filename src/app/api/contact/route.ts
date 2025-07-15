@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { executeQuery, getConnectionPool } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 import { z } from 'zod';
 import { format } from 'date-fns';
 import { sendEmail } from '@/lib/email';

@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import db, { getConnectionPool } from '@/lib/db';
+import db, { executeQuery } from '@/lib/db';
 import { isAdmin } from '@/lib/auth';
 
 interface RouteParams {
-    params: {
+    params: Promise<{
         id: string;
-    };
+    }>;
 }
 
 // GET a single blog post by ID
@@ -26,7 +26,7 @@ export async function GET(
             GROUP BY p.id, u.name
         `;
 
-        const id = await params.id;
+        const { id } = await params;
         const result = await db.executeQuery(query, [id]);
 
         if (!result || result.length === 0) {
@@ -64,97 +64,107 @@ export async function PATCH(
             );
         }
 
-        const id = await params.id;
+        const { id } = await params;
         const data = await request.json();
 
-        // Start a transaction
-        const pool = getConnectionPool();
-        const client = await pool.connect();
-
+        // Use individual queries for serverless compatibility
         try {
-            await client.query('BEGIN');
-
             // First check if the post exists
             const checkQuery = `SELECT id FROM blog_posts WHERE id = $1`;
-            const checkResult = await client.query(checkQuery, [id]);
+            const checkResult = await executeQuery(checkQuery, [id]);
 
-            if (checkResult.rows.length === 0) {
-                await client.query('ROLLBACK');
+            if (!checkResult || checkResult.length === 0) {
                 return NextResponse.json(
                     { error: 'Blog post not found', success: false },
                     { status: 404 }
                 );
             }
 
+            // Handle field mapping for compatibility
+            const processedData = { ...data };
+            
+            // Convert 'published' boolean to 'status' and 'published_at'
+            if ('published' in data) {
+                if (data.published === true) {
+                    processedData.status = 'published';
+                    processedData.published_at = new Date();
+                } else if (data.published === false) {
+                    processedData.status = 'draft';
+                    processedData.published_at = null;
+                }
+                delete processedData.published;
+            }
+            
+            // Remove 'featured' field as it doesn't exist in the database
+            if ('featured' in processedData) {
+                delete processedData.featured;
+            }
+
             // Build the update query dynamically based on which fields are provided
             const allowedFields = [
                 'title', 'content', 'excerpt', 'author_id', 'featured_image',
-                'status', 'meta_title', 'meta_description', 'tags', 'published',
-                'featured', 'slug'
+                'status', 'meta_title', 'meta_description', 'tags', 'slug', 'published_at'
             ];
 
-            const updateFields = Object.keys(data).filter(key =>
-                allowedFields.includes(key) && data[key] !== undefined
+            const updateFields = Object.keys(processedData).filter(key =>
+                allowedFields.includes(key) && processedData[key] !== undefined
             );
 
             if (updateFields.length === 0) {
-                await client.query('ROLLBACK');
                 return NextResponse.json({
                     message: 'No valid fields to update',
                     success: true,
-                    post: checkResult.rows[0]
+                    post: checkResult[0]
                 });
             }
 
             const setClause = updateFields.map((field, index) => `${field} = $${index + 2}`).join(', ');
             const updateQuery = `
-        UPDATE blog_posts
-        SET ${setClause}, updated_at = NOW()
-        WHERE id = $1
-        RETURNING *
-      `;
+                UPDATE blog_posts
+                SET ${setClause}, updated_at = NOW()
+                WHERE id = $1
+                RETURNING *
+            `;
 
-            const values = [id, ...updateFields.map(field => data[field])];
-            const updateResult = await client.query(updateQuery, values);
+            const values = [id, ...updateFields.map(field => processedData[field])];
+            const updateResult = await executeQuery(updateQuery, values);
 
             // If categories are provided, update them
             if (data.categories && Array.isArray(data.categories)) {
                 // First delete existing category relationships
-                await client.query(
+                await executeQuery(
                     `DELETE FROM blog_post_categories WHERE post_id = $1`,
                     [id]
                 );
 
-                // Then add new ones if any are provided
+                // Then insert new ones if any
                 if (data.categories.length > 0) {
-                    const categoryValues = data.categories.map((categoryId, index) =>
+                    const categoryValues = data.categories.map((categoryId: number, index: number) =>
                         `($1, $${index + 2})`
                     ).join(', ');
 
                     const insertCategoriesQuery = `
-            INSERT INTO blog_post_categories (post_id, category_id)
-            VALUES ${categoryValues}
-          `;
+                        INSERT INTO blog_post_categories (post_id, category_id)
+                        VALUES ${categoryValues}
+                    `;
 
-                    await client.query(
-                        insertCategoriesQuery,
-                        [id, ...data.categories]
-                    );
+                    await executeQuery(insertCategoriesQuery, [id, ...data.categories]);
                 }
             }
 
-            await client.query('COMMIT');
-
             return NextResponse.json({
-                post: updateResult.rows[0],
+                post: updateResult[0],
                 success: true
             });
+
         } catch (error) {
-            await client.query('ROLLBACK');
-            throw error;
-        } finally {
-            client.release();
+            console.error('Error updating blog post:', error);
+            return NextResponse.json(
+                { error: 'Failed to update blog post', success: false },
+                { status: 500 }
+            );
         }
+
     } catch (error) {
         console.error('Error updating blog post:', error);
         return NextResponse.json(
@@ -179,51 +189,46 @@ export async function DELETE(
             );
         }
 
-        const id = await params.id;
+        const { id } = await params;
 
-        // Start a transaction
-        const pool = getConnectionPool();
-        const client = await pool.connect();
-
+        // Use individual queries for serverless compatibility
         try {
-            await client.query('BEGIN');
-
             // First check if the post exists
             const checkQuery = `SELECT id FROM blog_posts WHERE id = $1`;
-            const checkResult = await client.query(checkQuery, [id]);
+            const checkResult = await executeQuery(checkQuery, [id]);
 
-            if (checkResult.rows.length === 0) {
-                await client.query('ROLLBACK');
+            if (!checkResult || checkResult.length === 0) {
                 return NextResponse.json(
                     { error: 'Blog post not found', success: false },
                     { status: 404 }
                 );
             }
 
-            // Delete associated category relationships first (due to foreign key constraints)
-            await client.query(
+            // Delete category relationships first
+            await executeQuery(
                 `DELETE FROM blog_post_categories WHERE post_id = $1`,
                 [id]
             );
 
             // Delete the blog post
-            await client.query(
+            await executeQuery(
                 `DELETE FROM blog_posts WHERE id = $1`,
                 [id]
             );
-
-            await client.query('COMMIT');
 
             return NextResponse.json({
                 message: 'Blog post deleted successfully',
                 success: true
             });
+
         } catch (error) {
-            await client.query('ROLLBACK');
-            throw error;
-        } finally {
-            client.release();
+            console.error('Error deleting blog post:', error);
+            return NextResponse.json(
+                { error: 'Failed to delete blog post', success: false },
+                { status: 500 }
+            );
         }
+
     } catch (error) {
         console.error('Error deleting blog post:', error);
         return NextResponse.json(
