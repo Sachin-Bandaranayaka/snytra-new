@@ -6,7 +6,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = "postgresql://placeholder:placeholder@placeholder/placeholder" // This will be overridden at runtime
 }
 
 // Existing User model from database
@@ -82,9 +82,9 @@ model Job {
   requirements   String
   benefits       String?
   salary         String?
-  isActive       Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  isActive       Boolean  @default(true) @map("isactive")
+  createdAt      DateTime @default(now()) @map("createdat")
+  updatedAt      DateTime @updatedAt @map("updatedat")
 
   @@map("jobs")
 }

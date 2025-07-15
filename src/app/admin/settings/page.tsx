@@ -207,6 +207,9 @@ export default function SettingsPage() {
             }
 
             setSaveMessage({ type: 'success', text: 'Settings saved successfully' });
+            
+            // Dispatch a custom event to trigger UI updates
+            window.dispatchEvent(new CustomEvent('settingsUpdated'));
         } catch (error) {
             console.error('Error saving settings:', error);
             setSaveMessage({ type: 'error', text: 'Failed to save settings' });

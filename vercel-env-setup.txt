@@ -1,0 +1,21 @@
+
+# Vercel Environment Variables Setup Guide
+
+Copy these environment variables to your Vercel project:
+
+1. Go to: https://vercel.com/your-project/settings/environment-variables
+
+2. Add these variables:
+
+DATABASE_URL="postgresql://neondb_owner:npg_VesQoN7wIy4a@ep-cold-bush-afzix1ig-pooler.c-2.us-west-2.aws.neon.tech/neondb?sslmode=require"
+
+NEXTAUTH_SECRET="T3/6MgbF7T3j4v1ofxB3D7HXm+HddyXjHx7CuZfccHA="
+
+NEXTAUTH_URL="https://your-domain.vercel.app"
+
+# Email settings (optional - set if you want email functionality):
+# EMAIL_USER="your-actual-email@gmail.com"
+# EMAIL_PASS="your-app-password"
+
+3. Make sure to set them for Production, Preview, and Development environments
+

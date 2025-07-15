@@ -69,9 +69,9 @@ export async function PATCH(req: NextRequest) {
         // Update setting
         const result = await sql`
             INSERT INTO settings (key, value)
-            VALUES (${key}, ${JSON.stringify(value)})
+            VALUES (${key}, ${value})
             ON CONFLICT (key) 
-            DO UPDATE SET value = ${JSON.stringify(value)}, updated_at = CURRENT_TIMESTAMP
+            DO UPDATE SET value = ${value}, updated_at = CURRENT_TIMESTAMP
             RETURNING key, value
         `;
 

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/db';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { verifyFeatureAccess } from '@/lib/subscription-utils';
+import { verifyFeatureAccess } from '@/lib/subscription-server';
 
 /**
  * Verify if the current user has access to a specific feature

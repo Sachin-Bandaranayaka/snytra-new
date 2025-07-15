@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { sql } from '@/db/postgres';
 
 // Paths that should be accessible even in maintenance mode
 const ALLOWED_PATHS = [
@@ -19,61 +18,74 @@ function isAllowedPath(path: string): boolean {
     return ALLOWED_PATHS.some(allowedPath => path.startsWith(allowedPath));
 }
 
-// Check if user is an admin based on cookies
+// Check if user has admin role based on cookies or headers
 function isAdmin(request: NextRequest): boolean {
-    // This is a simplified check. In a real app, you'd verify the session
-    // and check if the user has admin permissions
-    const sessionToken = request.cookies.get('next-auth.session-token')?.value;
-    const adminEmailCookie = request.cookies.get('admin_email')?.value;
-
-    return !!sessionToken || !!adminEmailCookie;
+    // Check for admin cookie or header
+    const adminCookie = request.cookies.get('user_role')?.value;
+    return adminCookie === 'admin' || adminCookie === 'super_admin';
 }
 
 export async function middleware(request: NextRequest) {
-    // Check if we're in maintenance mode
     try {
-        // Skip maintenance mode check for allowed paths
+        // Skip maintenance check for allowed paths
         if (isAllowedPath(request.nextUrl.pathname)) {
             return NextResponse.next();
         }
 
-        // Get maintenance mode from cookie
+        // Get maintenance mode from cookie first
         const maintenanceCookie = request.cookies.get('maintenance_mode')?.value;
         let isMaintenanceMode = maintenanceCookie === 'true';
 
-        // If cookie not present, check database
+        // If cookie not present, fetch from API route instead of direct DB access
         if (maintenanceCookie === undefined) {
-            const result = await sql`
-                SELECT value->>'maintenanceMode' as maintenance_mode 
-                FROM settings 
-                WHERE key = 'advanced'
-            `;
-            isMaintenanceMode = result[0]?.maintenance_mode === 'true';
+            try {
+                const baseUrl = request.nextUrl.origin;
+                const response = await fetch(`${baseUrl}/api/maintenance-status`, {
+                    headers: {
+                        'cookie': request.headers.get('cookie') || '',
+                    },
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    isMaintenanceMode = data.maintenanceMode === true;
+                    
+                    // Set cookie for future requests to avoid API calls
+                    const nextResponse = NextResponse.next();
+                    nextResponse.cookies.set('maintenance_mode', isMaintenanceMode.toString(), {
+                        maxAge: 60 * 5, // 5 minutes
+                        httpOnly: true,
+                        secure: process.env.NODE_ENV === 'production',
+                    });
+                    
+                    if (isMaintenanceMode && !isAdmin(request)) {
+                        return NextResponse.redirect(new URL('/maintenance', request.url));
+                    }
+                    
+                    return nextResponse;
+                }
+            } catch (fetchError) {
+                console.error('Failed to fetch maintenance status:', fetchError);
+                // Fall back to allowing the request if we can't check maintenance status
+                return NextResponse.next();
+            }
         }
 
         // If maintenance mode is enabled and user is not an admin
         if (isMaintenanceMode && !isAdmin(request)) {
-            // Redirect to maintenance page
-            return NextResponse.rewrite(new URL('/maintenance', request.url));
+            return NextResponse.redirect(new URL('/maintenance', request.url));
         }
+
+        return NextResponse.next();
     } catch (error) {
         console.error('Error in middleware:', error);
-        // In case of error, allow the request to proceed to avoid blocking the site
+        // In case of any error, allow the request to proceed
+        return NextResponse.next();
     }
-
-    return NextResponse.next();
 }
 
-// Only run middleware on specific paths
 export const config = {
     matcher: [
-        /*
-         * Match all request paths except:
-         * - _next/static (static files)
-         * - _next/image (image optimization files)
-         * - favicon.ico (favicon file)
-         * - public files (public folder)
-         */
-        '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
+        '/((?!_next/static|_next/image|favicon.ico|public/).*)',
     ],
 };

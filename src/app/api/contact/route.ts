@@ -35,7 +35,14 @@ export async function POST(request: NextRequest) {
         try {
             await client.query('BEGIN');
 
-            // 1. Store the submission in the database
+            // 1. Fix contact_submissions sequence and store the submission in the database
+            await client.query(`
+                SELECT setval(
+                    pg_get_serial_sequence('contact_submissions', 'id'), 
+                    (SELECT COALESCE(MAX(id), 0) FROM contact_submissions) + 1
+                )
+            `);
+
             const submissionResult = await client.query(
                 `INSERT INTO contact_submissions (name, email, phone, message) 
          VALUES ($1, $2, $3, $4) 

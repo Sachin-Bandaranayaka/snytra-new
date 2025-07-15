@@ -69,6 +69,26 @@ header.bg-\[\#131600\] {
 }
 
 /* Fix for dashboard sidebar visibility on large screens */
+
+/* Cookie settings animations */
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  20%, 80% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+.animate-fade-in-out {
+  animation: fadeInOut 3s ease-in-out;
+}
 .hidden.lg\:fixed.lg\:inset-y-0.lg\:flex.lg\:w-16.lg\:flex-col {
   display: flex !important;
 }

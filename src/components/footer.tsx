@@ -58,6 +58,8 @@ export default function Footer({ siteName, logoUrl }: FooterProps) {
                             <li><a href="/menu" className="text-gray-600 hover:text-primary transition-colors duration-200">Menu</a></li>
                             <li><a href="/reservations" className="text-gray-600 hover:text-primary transition-colors duration-200">Reservations</a></li>
                             <li><a href="/contact" className="text-gray-600 hover:text-primary transition-colors duration-200">Contact</a></li>
+                            <li><a href="/blog" className="text-gray-600 hover:text-primary transition-colors duration-200">Blog</a></li>
+                            <li><a href="/careers" className="text-gray-600 hover:text-primary transition-colors duration-200">Careers</a></li>
                         </ul>
                     </div>
 

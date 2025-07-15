@@ -11,8 +11,15 @@ import { logger } from './logger';
 const isProduction = process.env.NODE_ENV === 'production';
 const isServerless = process.env.VERCEL === '1';
 
-// Get connection string from environment
-const connectionString = process.env.DATABASE_URL;
+// Get connection string from environment and trim any whitespace/newlines/quotes
+let connectionString = process.env.DATABASE_URL?.trim();
+
+if (connectionString?.startsWith('DATABASE_URL=')) {
+    connectionString = connectionString.substring('DATABASE_URL='.length);
+}
+
+// Remove quotes that might be wrapping the connection string
+connectionString = connectionString?.replace(/^["']|["']$/g, '');
 
 if (!connectionString) {
     throw new Error('DATABASE_URL is not defined in environment variables');
@@ -71,6 +78,11 @@ export function getPrismaClient() {
     if (!_prisma) {
         try {
             _prisma = new PrismaClient({
+                datasources: {
+                    db: {
+                        url: connectionString,
+                    },
+                },
                 log: isProduction ? ['error'] : ['query', 'error', 'warn'],
             });
             logger.info('Prisma client initialized');
@@ -104,13 +116,13 @@ export async function executeTransaction<T = any>(
     if (isServerless) {
         // In serverless, use Prisma for transactions
         const prisma = getPrismaClient();
-        return await prisma.$transaction(async (tx) => {
+        return prisma.$transaction(async (tx) => {
             return Promise.all(
                 queries.map(({ query, params }) =>
-                    tx.$executeRawUnsafe(query, ...params)
+                    tx.$queryRawUnsafe(query, ...params)
                 )
             );
-        });
+        }) as Promise<T[]>;
     } else {
         // In development, use pg Pool for transactions
         const pool = getConnectionPool();
@@ -123,7 +135,7 @@ export async function executeTransaction<T = any>(
                 )
             );
             await client.query('COMMIT');
-            return results.map(result => result.rows);
+            return results.map(result => result.rows) as any;
         } catch (error) {
             await client.query('ROLLBACK');
             logger.error('Transaction failed', { error });

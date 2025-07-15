@@ -73,26 +73,57 @@ export async function POST(request: NextRequest) {
                 )
             `);
 
+            // Fix the sequence to avoid conflicts
+            await client.query(`
+                SELECT setval(
+                    pg_get_serial_sequence('demo_requests', 'id'), 
+                    (SELECT COALESCE(MAX(id), 0) FROM demo_requests) + 1
+                )
+            `);
+
             // 1. Store the demo request in the database
-            const requestResult = await client.query(
-                `INSERT INTO demo_requests (
-                    name, email, phone, company, position, business_type, 
-                    employee_count, preferred_date, preferred_time, message
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
-                RETURNING id, created_at`,
-                [
-                    name,
-                    email,
-                    phone,
-                    company,
-                    position || null,
-                    businessType,
-                    employeeCount || null,
-                    preferredDate,
-                    preferredTime,
-                    message || null
-                ]
-            );
+            let requestResult;
+            let retryCount = 0;
+            const maxRetries = 3;
+            
+            while (retryCount < maxRetries) {
+                try {
+                    requestResult = await client.query(
+                        `INSERT INTO demo_requests (
+                            name, email, phone, company, position, business_type, 
+                            employee_count, preferred_date, preferred_time, message
+                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
+                        RETURNING id, created_at`,
+                        [
+                            name,
+                            email,
+                            phone,
+                            company,
+                            position || null,
+                            businessType,
+                            employeeCount || null,
+                            preferredDate,
+                            preferredTime,
+                            message || null
+                        ]
+                    );
+                    break; // Success, exit retry loop
+                } catch (error: any) {
+                    if (error.code === '23505' && retryCount < maxRetries - 1) {
+                        // Duplicate key error, reset sequence and retry
+                        retryCount++;
+                        await client.query(`
+                            SELECT setval(
+                                pg_get_serial_sequence('demo_requests', 'id'), 
+                                (SELECT COALESCE(MAX(id), 0) FROM demo_requests) + 1
+                            )
+                        `);
+                        continue;
+                    } else {
+                        throw error; // Re-throw if not a duplicate key error or max retries reached
+                    }
+                }
+            }
 
             if (!requestResult.rows || requestResult.rows.length === 0) {
                 throw new Error('Failed to insert demo request into database');
@@ -144,7 +175,14 @@ export async function POST(request: NextRequest) {
                 emailContent = emailContent.replace(/\{\{submit_date\}\}/g, formattedDate);
             }
 
-            // 3. Log the email to be sent
+            // 3. Fix email_logs sequence and log the email to be sent
+            await client.query(`
+                SELECT setval(
+                    pg_get_serial_sequence('email_logs', 'id'), 
+                    (SELECT COALESCE(MAX(id), 0) FROM email_logs) + 1
+                )
+            `);
+
             await client.query(
                 `INSERT INTO email_logs (recipient, subject, template_name, data) 
                 VALUES ($1, $2, $3, $4)`,

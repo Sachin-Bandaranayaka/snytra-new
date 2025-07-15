@@ -34,7 +34,7 @@ const nextConfig = {
     return config;
   },
   images: {
-    domains: ['uploadthing.com', 'fonts.gstatic.com', 'randomuser.me', 'utfs.io'],
+    domains: ['uploadthing.com', 'fonts.gstatic.com', 'randomuser.me', 'utfs.io', 'dngvk46yy8.ufs.sh'],
     remotePatterns: [
       {
         protocol: 'https',
@@ -51,6 +51,14 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'utfs.io',
+      },
+      {
+        protocol: 'https',
+        hostname: 'dngvk46yy8.ufs.sh',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.ufs.sh',
       }
     ],
   },

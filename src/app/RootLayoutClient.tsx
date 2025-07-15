@@ -6,19 +6,61 @@ import Footer from "@/components/footer";
 import CartProvider from "@/components/providers/CartProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import NoticesBanner from "@/components/NoticesBanner";
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import InitMaintenanceMode from "./InitMaintenanceMode";
 
 export default function RootLayoutClient({
     children,
-    siteName,
-    logoUrl,
+    siteName: initialSiteName,
+    logoUrl: initialLogoUrl,
 }: Readonly<{
     children: React.ReactNode;
     siteName: string;
     logoUrl: string;
 }>) {
+    const [siteName, setSiteName] = useState(initialSiteName);
+    const [logoUrl, setLogoUrl] = useState(initialLogoUrl);
     const pathname = usePathname();
+    
+    // Fetch current settings dynamically
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const response = await fetch('/api/settings');
+                if (response.ok) {
+                    const settings = await response.json();
+                    
+                    if (settings.general?.siteName) {
+                        setSiteName(settings.general.siteName);
+                    }
+                    
+                    if (settings.appearance?.logo) {
+                        setLogoUrl(settings.appearance.logo);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to fetch settings:', error);
+            }
+        };
+
+        fetchSettings();
+
+        // Listen for settings update events
+        const handleSettingsUpdate = () => {
+            fetchSettings();
+        };
+
+        window.addEventListener('settingsUpdated', handleSettingsUpdate);
+
+        // Set up an interval to periodically check for updates (fallback)
+        const interval = setInterval(fetchSettings, 30000); // Check every 30 seconds
+
+        return () => {
+            window.removeEventListener('settingsUpdated', handleSettingsUpdate);
+            clearInterval(interval);
+        };
+    }, []);
+
     const isMenuRoute = pathname.startsWith('/menu');
     const isStaffRoute = pathname.startsWith('/staff');
     const isAdminRoute = pathname.startsWith('/admin');
