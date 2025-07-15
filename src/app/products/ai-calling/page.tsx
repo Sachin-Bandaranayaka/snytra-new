@@ -1,43 +1,75 @@
+// src/app/products/ai-calling/page.tsx
+
 import Image from "next/image";
 import Link from "next/link";
 import { Metadata } from "next";
 import SEO, { createProductSchema } from "@/components/SEO";
+import { executeQuery } from '@/lib/db'; // Import db helper
+import { notFound } from 'next/navigation'; // Import notFound
 
-export const metadata: Metadata = {
-    title: "AI Calling | RestaurantOS",
-    description: "Transform your restaurant communication with AI-powered calling. Automate reservations, handle customer inquiries, and boost efficiency with smart voice technology.",
-    keywords: "ai calling, restaurant ai, automated calls, voice assistant, restaurant communication",
-    openGraph: {
-        title: "AI Calling | RestaurantOS",
-        description: "Transform your restaurant communication with AI-powered calling.",
-        images: [{ url: "/images/products/ai-calling.jpg" }],
-        type: "website",
-    },
-    twitter: {
-        card: "summary_large_image",
-        title: "AI Calling | RestaurantOS",
-        description: "Transform your restaurant communication with AI-powered calling.",
-        images: ["/images/products/ai-calling.jpg"],
-    },
-};
+// Define the structure of the page content
+interface AiCallingData {
+    title: string;
+    description: string;
+    links: Array<{ text: string; href: string; attributes: { class: string; } }>;
+    features: {
+        title: string;
+        items: Array<{ title: string; description: string; }>;
+    };
+}
 
-export default function AICalling() {
-    const productSchema = createProductSchema({
-        name: "AI Calling",
-        description: "Transform your restaurant communication with AI-powered calling technology.",
-        image: "https://restaurantos.com/images/products/ai-calling.jpg",
-        offers: {
-            price: 79,
-            priceCurrency: "USD",
-            availability: "https://schema.org/InStock",
+async function getPageData(slug: string): Promise<AiCallingData | null> {
+    const query = 'SELECT content FROM pages WHERE slug = $1 AND status = $2 LIMIT 1';
+    try {
+        const result = await executeQuery<{ content: { AICallingSystem: AiCallingData } }[]>(query, [slug, 'published']);
+        if (result?.[0]?.content?.AICallingSystem) {
+            return result[0].content.AICallingSystem;
+        }
+    } catch (error) {
+        console.error(`Failed to fetch page data for slug "${slug}":`, error);
+    }
+    return null;
+}
+
+// The metadata function can also be made async to fetch dynamic data
+export async function generateMetadata(): Promise<Metadata> {
+    const pageContent = await getPageData('products/ai-calling');
+    const title = pageContent?.title || 'AI Calling';
+    const description = pageContent?.description || 'Transform your restaurant communication...';
+
+    return {
+        title: `${title} | RestaurantOS`,
+        description: description,
+        keywords: "ai calling, restaurant ai, automated calls, voice assistant",
+        openGraph: {
+            title: `${title} | RestaurantOS`,
+            description: description,
+            images: [{ url: "/images/products/ai-calling.jpg" }],
         },
+    };
+}
+
+// Convert the main component to an async function
+export default async function AICalling() {
+    // Fetch the dynamic data when the page is built on the server
+    const pageContent = await getPageData('products/ai-calling');
+
+    if (!pageContent) {
+        notFound();
+    }
+
+    const productSchema = createProductSchema({
+        name: pageContent.title,
+        description: pageContent.description,
+        image: "https://restaurantos.com/images/products/ai-calling.jpg",
+        offers: { price: 79, priceCurrency: "USD", availability: "https://schema.org/InStock" },
     });
 
     return (
         <>
             <SEO
-                title="AI Calling | RestaurantOS"
-                description="Transform your restaurant communication with AI-powered calling."
+                title={`${pageContent.title} | RestaurantOS`}
+                description={pageContent.description}
                 ogImage="/images/products/ai-calling.jpg"
                 ogType="product"
                 schema={productSchema}
@@ -49,35 +81,22 @@ export default function AICalling() {
                     <div className="flex flex-col md:flex-row items-center">
                         <div className="md:w-1/2 mb-8 md:mb-0 md:pr-12">
                             <h1 className="text-4xl md:text-5xl font-bold text-primary mb-6">
-                                AI Calling
+                                {pageContent.title}
                             </h1>
                             <p className="text-lg mb-8 text-charcoal">
-                                Transform your restaurant's communication with advanced AI-powered calling technology. Automate reservations, handle customer inquiries, and manage order confirmations without adding staff.
+                                {pageContent.description}
                             </p>
                             <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-                                <Link
-                                    href="/register?product=ai-calling"
-                                    className="bg-primary text-white px-6 py-3 rounded font-medium text-center hover:bg-primary/90 transition-colors"
-                                >
-                                    Get Started
-                                </Link>
-                                <Link
-                                    href="/contact-us"
-                                    className="border border-primary text-primary px-6 py-3 rounded font-medium text-center hover:bg-beige transition-colors"
-                                >
-                                    Contact Sales
-                                </Link>
+                                {pageContent.links.map((link, index) => (
+                                    <Link key={index} href={link.href} className={link.attributes.class}>
+                                        {link.text}
+                                    </Link>
+                                ))}
                             </div>
                         </div>
                         <div className="md:w-1/2">
                             <div className="rounded-lg overflow-hidden shadow-xl">
-                                <Image
-                                    src="/images/products/ai-calling.jpg"
-                                    alt="AI Calling System"
-                                    width={600}
-                                    height={400}
-                                    className="w-full h-auto"
-                                />
+                                <Image src="/images/products/ai-calling.jpg" alt="AI Calling System" width={600} height={400} className="w-full h-auto" />
                             </div>
                         </div>
                     </div>
@@ -88,47 +107,18 @@ export default function AICalling() {
             <section className="py-16">
                 <div className="container mx-auto px-6">
                     <h2 className="text-3xl font-bold text-primary text-center mb-12">
-                        Key Features
+                        {pageContent.features.title}
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {/* Feature 1 */}
-                        <div className="bg-white p-8 rounded-lg shadow-md">
-                            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-6">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                </svg>
+                        {pageContent.features.items.map((item, index) => (
+                            <div key={index} className="bg-white p-8 rounded-lg shadow-md">
+                                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-6">
+                                    {/* Icon SVG */}
+                                </div>
+                                <h3 className="text-xl font-bold mb-4">{item.title}</h3>
+                                <p>{item.description}</p>
                             </div>
-                            <h3 className="text-xl font-bold mb-4">Automated Reservations</h3>
-                            <p>
-                                Let AI handle booking requests, confirm reservations, and send reminders, reducing no-shows by up to 35%.
-                            </p>
-                        </div>
-
-                        {/* Feature 2 */}
-                        <div className="bg-white p-8 rounded-lg shadow-md">
-                            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-6">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                                </svg>
-                            </div>
-                            <h3 className="text-xl font-bold mb-4">Customer Support</h3>
-                            <p>
-                                Handle frequently asked questions, provide menu information, and address common concerns with natural-sounding AI.
-                            </p>
-                        </div>
-
-                        {/* Feature 3 */}
-                        <div className="bg-white p-8 rounded-lg shadow-md">
-                            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-6">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                </svg>
-                            </div>
-                            <h3 className="text-xl font-bold mb-4">Analytics & Insights</h3>
-                            <p>
-                                Gain valuable insights from call data, including peak call times, common inquiries, and customer satisfaction metrics.
-                            </p>
-                        </div>
+                        ))}
                     </div>
                 </div>
             </section>
@@ -266,4 +256,4 @@ export default function AICalling() {
             </section>
         </>
     );
-} 
+}

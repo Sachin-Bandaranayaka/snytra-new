@@ -33,6 +33,29 @@ model User {
   @@map("users")
 }
 
+model Page {
+  id                   Int       @id @default(autoincrement())
+  title                String
+  slug                 String    @unique
+  status               String?
+  last_updated         DateTime?
+  content              String?
+  created_at           DateTime  @default(now())
+  updated_at           DateTime  @updatedAt
+  parent_id            Int?
+  menu_order           Int?      @default(0)
+  page_template        String?   @default("default")
+  show_in_menu         Boolean?  @default(false)
+  show_in_footer       Boolean?  @default(false)
+  meta_title           String?
+  meta_description     String?
+  page_builder_content String?
+  use_page_builder     Boolean?  @default(false)
+  builder_template     String?
+
+  @@map("pages")
+}
+
 // Existing models
 model StaffMember {
   id        String   @id @default(uuid())

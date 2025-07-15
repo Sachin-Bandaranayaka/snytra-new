@@ -1,43 +1,74 @@
+// src/app/products/ai-whatsapp-messaging/page.tsx
+
 import Image from "next/image";
 import Link from "next/link";
 import { Metadata } from "next";
 import SEO, { createProductSchema } from "@/components/SEO";
+import { executeQuery } from '@/lib/db'; // Import db helper
+import { notFound } from 'next/navigation'; // Import notFound
 
-export const metadata: Metadata = {
-    title: "AI WhatsApp Messaging | Snytra",
-    description: "Transform your business communication with AI-powered WhatsApp messaging. Automate customer service, handle inquiries, and boost engagement.",
-    keywords: "ai whatsapp, business messaging, automated communication, business whatsapp, customer engagement",
-    openGraph: {
-        title: "AI WhatsApp Messaging | Snytra",
-        description: "Transform your business communication with AI-powered WhatsApp messaging.",
-        images: [{ url: "/images/products/ai-whatsapp-messaging.jpg" }],
-        type: "website",
-    },
-    twitter: {
-        card: "summary_large_image",
-        title: "AI WhatsApp Messaging | Snytra",
-        description: "Transform your business communication with AI-powered WhatsApp messaging.",
-        images: ["/images/products/ai-whatsapp-messaging.jpg"],
-    },
-};
+// Define the structure of the page content
+interface AiWhatsappData {
+    title: string;
+    description: string;
+    links: Array<{ text: string; href: string; attributes: { class: string; } }>;
+    features: {
+        title: string;
+        items: Array<{ title: string; description: string; }>;
+    };
+}
 
-export default function AIWhatsAppMessaging() {
-    const productSchema = createProductSchema({
-        name: "AI WhatsApp Messaging",
-        description: "Transform your business communication with AI-powered WhatsApp messaging technology.",
-        image: "https://snytra.com/images/products/ai-whatsapp-messaging.jpg",
-        offers: {
-            price: 69,
-            priceCurrency: "USD",
-            availability: "https://schema.org/InStock",
+async function getPageData(slug: string): Promise<AiWhatsappData | null> {
+    const query = 'SELECT content FROM pages WHERE slug = $1 AND status = $2 LIMIT 1';
+    try {
+        const result = await executeQuery<{ content: { AIWhatsAppMessaging: AiWhatsappData } }[]>(query, [slug, 'published']);
+        if (result?.[0]?.content?.AIWhatsAppMessaging) {
+            return result[0].content.AIWhatsAppMessaging;
+        }
+    } catch (error) {
+        console.error(`Failed to fetch page data for slug "${slug}":`, error);
+    }
+    return null;
+}
+
+// The metadata function is now async to fetch dynamic data
+export async function generateMetadata(): Promise<Metadata> {
+    const pageContent = await getPageData('products/ai-whatsapp-messaging');
+    const title = pageContent?.title || 'AI WhatsApp Messaging';
+    const description = pageContent?.description || 'Transform your business communication...';
+    
+    return {
+        title: `${title} | Snytra`,
+        description: description,
+        keywords: "ai whatsapp, business messaging, automated communication",
+        openGraph: {
+            title: `${title} | Snytra`,
+            description: description,
+            images: [{ url: "/images/products/ai-whatsapp-messaging.jpg" }],
         },
+    };
+}
+
+// The main component is now async
+export default async function AIWhatsAppMessaging() {
+    const pageContent = await getPageData('products/ai-whatsapp-messaging');
+
+    if (!pageContent) {
+        notFound();
+    }
+
+    const productSchema = createProductSchema({
+        name: pageContent.title,
+        description: pageContent.description,
+        image: "https://snytra.com/images/products/ai-whatsapp-messaging.jpg",
+        offers: { price: 69, priceCurrency: "USD", availability: "https://schema.org/InStock" },
     });
 
     return (
         <>
             <SEO
-                title="AI WhatsApp Messaging | Snytra"
-                description="Transform your business communication with AI-powered WhatsApp messaging."
+                title={`${pageContent.title} | Snytra`}
+                description={pageContent.description}
                 ogImage="/images/products/ai-whatsapp-messaging.jpg"
                 ogType="product"
                 schema={productSchema}
@@ -49,35 +80,22 @@ export default function AIWhatsAppMessaging() {
                     <div className="flex flex-col md:flex-row items-center">
                         <div className="md:w-1/2 mb-8 md:mb-0 md:pr-12">
                             <h1 className="text-4xl md:text-5xl font-bold text-primary mb-6">
-                                AI WhatsApp Messaging
+                                {pageContent.title}
                             </h1>
                             <p className="text-lg mb-8 text-charcoal">
-                                Engage with your customers through their preferred channel with AI-powered WhatsApp messaging. Automate responses, handle bookings, and provide instant customer service 24/7.
+                                {pageContent.description}
                             </p>
                             <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-                                <Link
-                                    href="/register?product=ai-whatsapp-messaging"
-                                    className="bg-primary text-white px-6 py-3 rounded font-medium text-center hover:bg-primary/90 transition-colors"
-                                >
-                                    Get Started
-                                </Link>
-                                <Link
-                                    href="/contact-us"
-                                    className="border border-primary text-primary px-6 py-3 rounded font-medium text-center hover:bg-beige transition-colors"
-                                >
-                                    Contact Sales
-                                </Link>
+                                {pageContent.links.map((link, index) => (
+                                     <Link key={index} href={link.href} className={link.attributes.class}>
+                                        {link.text}
+                                    </Link>
+                                ))}
                             </div>
                         </div>
                         <div className="md:w-1/2">
                             <div className="rounded-lg overflow-hidden shadow-xl">
-                                <Image
-                                    src="/images/products/ai-whatsapp-messaging.jpg"
-                                    alt="AI WhatsApp Messaging System"
-                                    width={600}
-                                    height={400}
-                                    className="w-full h-auto"
-                                />
+                                <Image src="/images/products/ai-whatsapp-messaging.jpg" alt="AI WhatsApp Messaging System" width={600} height={400} className="w-full h-auto"/>
                             </div>
                         </div>
                     </div>
@@ -88,47 +106,19 @@ export default function AIWhatsAppMessaging() {
             <section className="py-16">
                 <div className="container mx-auto px-6">
                     <h2 className="text-3xl font-bold text-primary text-center mb-12">
-                        Key Features
+                        {pageContent.features.title}
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {/* Feature 1 */}
-                        <div className="bg-white p-8 rounded-lg shadow-md">
-                            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-6">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                                </svg>
+                        {pageContent.features.items.map((item, index) => (
+                            <div key={index} className="bg-white p-8 rounded-lg shadow-md">
+                                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-6">
+                                    {/* Corresponding feature icon would go here */}
+                                    <svg>...</svg>
+                                </div>
+                                <h3 className="text-xl font-bold mb-4">{item.title}</h3>
+                                <p>{item.description}</p>
                             </div>
-                            <h3 className="text-xl font-bold mb-4">Automated Responses</h3>
-                            <p>
-                                AI-powered responses to common questions about reservations, menu items, business hours, and more.
-                            </p>
-                        </div>
-
-                        {/* Feature 2 */}
-                        <div className="bg-white p-8 rounded-lg shadow-md">
-                            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-6">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
-                            <h3 className="text-xl font-bold mb-4">24/7 Availability</h3>
-                            <p>
-                                Provide instant responses to customers at any time of day, improving satisfaction and reducing wait times.
-                            </p>
-                        </div>
-
-                        {/* Feature 3 */}
-                        <div className="bg-white p-8 rounded-lg shadow-md">
-                            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-6">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                </svg>
-                            </div>
-                            <h3 className="text-xl font-bold mb-4">Order Management</h3>
-                            <p>
-                                Allow customers to place orders via WhatsApp, with automatic confirmation and status updates.
-                            </p>
-                        </div>
+                        ))}
                     </div>
                 </div>
             </section>
@@ -209,7 +199,6 @@ export default function AIWhatsAppMessaging() {
                         </div>
                     </div>
                 </div>
-            </section>
-        </>
+            </section>        </>
     );
-} 
+}

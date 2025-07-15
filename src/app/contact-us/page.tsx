@@ -1,18 +1,64 @@
+// src/app/contact-us/page.tsx
+
 import React from 'react';
 import Link from 'next/link';
 import ContactForm from './ContactForm';
+import { executeQuery } from '@/lib/db'; // 1. Import database helper
+import { notFound } from 'next/navigation';   // 2. Import notFound for error handling
 
-export default function ContactUs() {
+// 3. Define the structure of the Contact Us JSON data
+interface ContactUsData {
+    title: string;
+    description: string;
+    contactInfo: {
+        phone: string;
+        email: string;
+    };
+}
+
+/**
+ * Fetches the page data from the database.
+ * @param slug The URL slug of the page to fetch.
+ * @returns The page's JSON content or null if not found.
+ */
+async function getPageData(slug: string): Promise<ContactUsData | null> {
+    const query = 'SELECT content FROM pages WHERE slug = $1 AND status = $2 LIMIT 1';
+    
+    try {
+        // The content from DB will be in the format { "ContactUs": { ... } }
+        const result = await executeQuery<{ content: { ContactUs: ContactUsData } }[]>(query, [slug, 'published']);
+        
+        if (result && result.length > 0 && result[0].content && result[0].content.ContactUs) {
+            return result[0].content.ContactUs;
+        }
+    } catch (error) {
+        console.error(`Failed to fetch page data for slug "${slug}":`, error);
+    }
+    
+    return null;
+}
+
+
+// 4. The main component is now an async function
+export default async function ContactUs() {
+    // 5. Fetch the dynamic data for the 'contact' page
+    const pageContent = await getPageData('contact');
+
+    // If no content is found, show a 404 page
+    if (!pageContent) {
+        notFound();
+    }
+
     return (
         <main className="min-h-screen flex flex-col">
             {/* Header */}
             <section className="bg-beige py-16">
                 <div className="container mx-auto px-6">
                     <h1 className="text-4xl md:text-5xl font-bold text-primary text-center mb-6">
-                        Contact Us
+                        {pageContent.title} {/* <-- DYNAMIC DATA */}
                     </h1>
                     <p className="text-xl text-center max-w-3xl mx-auto">
-                        Let us know how we can help.
+                        {pageContent.description} {/* <-- DYNAMIC DATA */}
                     </p>
                 </div>
             </section>
@@ -32,7 +78,8 @@ export default function ContactUs() {
                                 <h3 className="text-xl font-bold">Call Us</h3>
                             </div>
                             <p className="text-darkGray">
-                                <a href="tel:+12345678990" className="hover:text-primary">+1 (234) 567-890</a>
+                                {/* <-- DYNAMIC DATA */}
+                                <a href={`tel:${pageContent.contactInfo.phone}`} className="hover:text-primary">{pageContent.contactInfo.phone}</a>
                             </p>
                         </div>
 
@@ -47,11 +94,12 @@ export default function ContactUs() {
                                 <h3 className="text-xl font-bold">Chat Us</h3>
                             </div>
                             <p className="text-darkGray">
-                                <a href="mailto:support@restaurantapp.com" className="hover:text-primary">support@restaurantapp.com</a>
+                                {/* <-- DYNAMIC DATA */}
+                                <a href={`mailto:${pageContent.contactInfo.email}`} className="hover:text-primary">{pageContent.contactInfo.email}</a>
                             </p>
                         </div>
 
-                        {/* Visit Us */}
+                        {/* Visit Us (This section remains static as there is no address in the JSON) */}
                         <div className="bg-white p-8 rounded-lg shadow-md">
                             <div className="flex items-center mb-4">
                                 <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center text-white mr-4">
@@ -63,7 +111,7 @@ export default function ContactUs() {
                                 <h3 className="text-xl font-bold">Visit Us</h3>
                             </div>
                             <p className="text-darkGray">
-                                123 Main Street, City, Country
+                                123 Main Street, City, Country (this is static)
                             </p>
                         </div>
                     </div>
@@ -80,4 +128,4 @@ export default function ContactUs() {
             </section>
         </main>
     );
-} 
+}

@@ -1,3 +1,5 @@
+// src/app/api/pages/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getSqlClient, executeQuery } from '@/lib/db';
 import { isUserAdmin } from '@/lib/authUtils';
