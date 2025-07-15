@@ -101,6 +101,9 @@ export default function Footer({ siteName, logoUrl }: FooterProps) {
                             <a href="/terms-of-service" className="text-gray-600 hover:text-primary text-sm transition-colors duration-200">
                                 Terms of Service
                             </a>
+                            <a href="/cookie-settings" className="text-gray-600 hover:text-primary text-sm transition-colors duration-200">
+                                Cookie Settings
+                            </a>
                         </div>
                     </div>
                 </div>
