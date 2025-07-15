@@ -139,6 +139,27 @@ exports.Prisma.UserScalarFieldEnum = {
   remember_token: 'remember_token'
 };
 
+exports.Prisma.PageScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  slug: 'slug',
+  status: 'status',
+  last_updated: 'last_updated',
+  content: 'content',
+  created_at: 'created_at',
+  updated_at: 'updated_at',
+  parent_id: 'parent_id',
+  menu_order: 'menu_order',
+  page_template: 'page_template',
+  show_in_menu: 'show_in_menu',
+  show_in_footer: 'show_in_footer',
+  meta_title: 'meta_title',
+  meta_description: 'meta_description',
+  page_builder_content: 'page_builder_content',
+  use_page_builder: 'use_page_builder',
+  builder_template: 'builder_template'
+};
+
 exports.Prisma.StaffMemberScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -196,6 +217,7 @@ exports.Prisma.NullsOrder = {
 
 exports.Prisma.ModelName = {
   User: 'User',
+  Page: 'Page',
   StaffMember: 'StaffMember',
   Job: 'Job',
   SlideShow: 'SlideShow'
