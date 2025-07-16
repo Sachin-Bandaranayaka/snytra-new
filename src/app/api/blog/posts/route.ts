@@ -143,6 +143,7 @@ export async function POST(request: NextRequest) {
             excerpt,
             authorId,
             featuredImage,
+            featured_image,
             metaTitle,
             metaDescription,
             tags,
@@ -151,6 +152,9 @@ export async function POST(request: NextRequest) {
             slug,
             categoryIds
         } = data;
+
+        // Handle both field naming conventions for featured image
+        const finalFeaturedImage = featuredImage || featured_image;
 
         // Handle field mapping for compatibility
         let { status } = data;
@@ -213,11 +217,11 @@ export async function POST(request: NextRequest) {
                 content,
                 excerpt || null,
                 authorId,
-                featuredImage || null,
+                finalFeaturedImage || null,
                 status || 'draft',
                 metaTitle || null,
                 metaDescription || null,
-                JSON.stringify(tags || []),
+                tags || [],
                 slug || null,
                 publishedAt
             ]);

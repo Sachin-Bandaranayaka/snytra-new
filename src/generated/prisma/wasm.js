@@ -139,6 +139,24 @@ exports.Prisma.UserScalarFieldEnum = {
   remember_token: 'remember_token'
 };
 
+exports.Prisma.CompanyInfoScalarFieldEnum = {
+  id: 'id',
+  user_id: 'user_id',
+  company_name: 'company_name',
+  industry: 'industry',
+  address: 'address',
+  city: 'city',
+  state: 'state',
+  zip_code: 'zip_code',
+  country: 'country',
+  business_size: 'business_size',
+  num_locations: 'num_locations',
+  tax_id: 'tax_id',
+  business_registration: 'business_registration',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+};
+
 exports.Prisma.PageScalarFieldEnum = {
   id: 'id',
   title: 'title',
@@ -228,6 +246,7 @@ exports.Prisma.JsonNullValueFilter = {
 
 exports.Prisma.ModelName = {
   User: 'User',
+  CompanyInfo: 'CompanyInfo',
   Page: 'Page',
   StaffMember: 'StaffMember',
   Job: 'Job',

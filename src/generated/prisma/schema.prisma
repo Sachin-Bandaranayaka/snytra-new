@@ -30,7 +30,34 @@ model User {
   reset_token_expires               DateTime?
   remember_token                    String?
 
+  // Relations
+  companyInfo CompanyInfo?
+
   @@map("users")
+}
+
+// Company information model
+model CompanyInfo {
+  id                    Int      @id @default(autoincrement())
+  user_id               Int      @unique
+  company_name          String
+  industry              String?
+  address               String?
+  city                  String?
+  state                 String?
+  zip_code              String?
+  country               String?
+  business_size         String?
+  num_locations         Int?     @default(1)
+  tax_id                String?
+  business_registration String?
+  created_at            DateTime @default(now())
+  updated_at            DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("company_info")
 }
 
 model Page {

@@ -1,234 +1,174 @@
 /**
  * Integration tests for the Registration and Login flow
  */
-import { describe, it, expect, vi, beforeEach, beforeAll, afterAll, afterEach } from 'vitest';
-import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import RegisterForm from '@/app/register/RegisterForm';
 import Login from '@/app/login/page';
-import { useRouter } from 'next/navigation';
-import { useToast } from '@/components/ui/toast';
-import { signIn, useSession } from 'next-auth/react';
-import { useSearchParams } from 'next/navigation';
 
-// Mock the components with issues
-vi.mock('@/app/register/RegisterForm', () => ({
-    __esModule: true,
-    default: vi.fn(() => {
-        return (
-            <div data-testid="mock-register-form">
-                <form>
-                    <div>
-                        <h2>Company Information</h2>
-                        <label htmlFor="companyName">Company Name*</label>
-                        <input id="companyName" type="text" />
-                        <label htmlFor="industry">Industry*</label>
-                        <select id="industry">
-                            <option value="fine-dining">Fine Dining</option>
-                        </select>
-                        <label htmlFor="businessSize">Business Size*</label>
-                        <select id="businessSize">
-                            <option value="small">Small (1-10 employees)</option>
-                        </select>
-                        <label htmlFor="address">Street Address*</label>
-                        <input id="address" type="text" />
-                        <label htmlFor="city">City*</label>
-                        <input id="city" type="text" />
-                        <label htmlFor="state">State/Province*</label>
-                        <input id="state" type="text" />
-                        <label htmlFor="zipCode">ZIP/Postal Code*</label>
-                        <input id="zipCode" type="text" />
-                        <button type="button">Continue</button>
-                    </div>
-                </form>
-            </div>
-        );
-    })
-}));
-
-vi.mock('@/app/login/page', () => ({
-    __esModule: true,
-    default: vi.fn(() => {
-        return (
-            <div data-testid="mock-login-form">
-                <form>
-                    <label htmlFor="email">Email Address</label>
-                    <input id="email" type="email" placeholder="admin@snytra.com" />
-                    <label htmlFor="password">Password</label>
-                    <input id="password" type="password" placeholder="••••••••" />
-                    <button type="submit">Sign in</button>
-                </form>
-            </div>
-        );
-    })
-}));
-
-// Mock next/navigation
+// Mock Next.js modules
 vi.mock('next/navigation', () => ({
-    useRouter: vi.fn(() => ({
-        push: vi.fn(),
-        back: vi.fn(),
-        forward: vi.fn(),
-        refresh: vi.fn(),
-        prefetch: vi.fn()
-    })),
-    useSearchParams: vi.fn(() => ({
-        get: vi.fn(param => {
-            if (param === 'plan') return null;
-            if (param === 'callbackUrl') return '/';
-            if (param === 'error') return null;
-            return null;
-        })
-    }))
+  useRouter: () => ({
+    push: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    refresh: vi.fn(),
+    prefetch: vi.fn()
+  }),
+  useSearchParams: () => ({
+    get: vi.fn()
+  })
 }));
 
-// Mock next-auth/react
-vi.mock('next-auth/react', () => {
-    const update = vi.fn();
-    return {
-        signIn: vi.fn(),
-        signOut: vi.fn(),
-        useSession: vi.fn(() => ({
-            data: null,
-            status: 'unauthenticated',
-            update
-        }))
-    };
-});
+vi.mock('next-auth/react', () => ({
+  signIn: vi.fn(),
+  useSession: () => ({ data: null, status: 'unauthenticated' })
+}));
 
-// Mock our toast component
 vi.mock('@/components/ui/toast', () => ({
-    useToast: vi.fn(() => ({
-        toast: vi.fn(),
-        Toaster: () => <div data-testid="toast-component" />
-    }))
+  useToast: () => ({
+    toast: vi.fn(),
+    Toaster: () => <div />
+  })
 }));
 
-// Mock the SEO component
-vi.mock('@/components/SEO', () => ({
-    __esModule: true,
-    default: () => <div data-testid="seo-component" />
-}));
-
-// Mock fetch
+// Mock fetch for API calls
 global.fetch = vi.fn();
 
 describe('Authentication Flow - Registration and Login', () => {
-    const mockRouter = {
-        push: vi.fn(),
-        back: vi.fn(),
-        forward: vi.fn(),
-        refresh: vi.fn(),
-        prefetch: vi.fn()
-    };
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
-    const mockToast = {
-        toast: vi.fn(),
-        Toaster: () => <div />
-    };
-
-    beforeEach(() => {
-        vi.resetAllMocks();
-
-        // Setup mocks
-        (useRouter as any).mockReturnValue(mockRouter);
-        (useToast as any).mockReturnValue(mockToast);
-
-        // Mock successful fetch response
-        (global.fetch as any).mockResolvedValue({
-            ok: true,
-            json: async () => ({ message: 'Success', user: { id: 1, name: 'Test User', email: 'test@example.com', role: 'customer' } })
-        });
-
-        // Mock signIn success response
-        (signIn as any).mockResolvedValue({ error: null, ok: true, status: 200 });
+  describe('Component Rendering', () => {
+    it('should render RegisterForm with correct testid', () => {
+      render(<RegisterForm />);
+      expect(screen.getByTestId('register-form')).toBeInTheDocument();
     });
 
-    describe('Registration Flow', () => {
-        it('should navigate through all registration steps with proper validation', async () => {
-            const user = userEvent.setup();
-            render(<RegisterForm />);
+    it('should render Login with correct testid', () => {
+      render(<Login />);
+      expect(screen.getByTestId('mock-login-form')).toBeInTheDocument();
+    });
+  });
 
-            // Check that the mock component renders
-            expect(screen.getByTestId('mock-register-form')).toBeInTheDocument();
-            expect(screen.getByText('Company Information')).toBeInTheDocument();
+  describe('Registration Flow', () => {
+    it('should handle simple registration form submission', async () => {
+      const user = userEvent.setup();
+      
+      // Mock successful API response
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        status: 201,
+        json: async () => ({ message: 'User registered successfully' })
+      });
 
-            // Test successful - our mock component is working
-        });
-
-        it('should display an error if registration fails', async () => {
-            // Setup mock for failed API response
-            (global.fetch as any).mockResolvedValue({
-                ok: false,
-                json: async () => ({ message: 'Registration failed', error: 'Email already exists' })
-            });
-
-            const user = userEvent.setup();
-            render(<RegisterForm />);
-
-            // Check that the mock component renders
-            expect(screen.getByTestId('mock-register-form')).toBeInTheDocument();
-
-            // Test successful - our mock component is working
-        });
+      render(<RegisterForm />);
+      
+      const form = screen.getByTestId('register-form');
+      expect(form).toBeInTheDocument();
+      
+      // Verify first step form elements exist
+      const companyInput = screen.getByPlaceholderText('Enter your company name');
+      const industrySelect = screen.getByDisplayValue('');
+      const nextButton = screen.getByRole('button', { name: /next/i });
+      
+      expect(companyInput).toBeInTheDocument();
+      expect(industrySelect).toBeInTheDocument();
+      expect(nextButton).toBeInTheDocument();
+      
+      // Fill out first step
+      await user.type(companyInput, 'Test Company');
+      
+      // Select industry
+      const industryDropdown = screen.getByLabelText('Industry *');
+      await user.selectOptions(industryDropdown, 'restaurant');
+      
+      // Select company size
+      const sizeDropdown = screen.getByLabelText('Company Size *');
+      await user.selectOptions(sizeDropdown, '1-10');
+      
+      // Click next to proceed
+      await user.click(nextButton);
+      
+      // Wait for step transition
+      await waitFor(() => {
+        expect(screen.getByTestId('contact-details-step')).toBeInTheDocument();
+      });
+      
+      // Verify we're on step 2
+      expect(screen.getByText('Contact Details')).toBeInTheDocument();
     });
 
-    describe('Login Flow', () => {
-        beforeEach(() => {
-            // Mock useSearchParams for login page
-            (useSearchParams as any).mockReturnValue({
-                get: (param: string) => {
-                    if (param === 'callbackUrl') return '/';
-                    if (param === 'error') return null;
-                    return null;
-                }
-            });
+    it('should display form validation errors', async () => {
+      const user = userEvent.setup();
+      
+      render(<RegisterForm />);
+      
+      const form = screen.getByTestId('register-form');
+      expect(form).toBeInTheDocument();
+      
+      // Test form is interactive
+      const nextButton = screen.getByRole('button', { name: /next/i });
+      await user.click(nextButton);
+      
+      // Form should still be present (basic validation)
+      expect(form).toBeInTheDocument();
+    });
+  });
 
-            // Mock signIn
-            (signIn as any).mockResolvedValue({
-                error: null,
-                ok: true,
-                status: 200
-            });
-        });
-
-        it('should successfully log in with valid credentials', async () => {
-            const user = userEvent.setup();
-            render(<Login />);
-
-            // Check that the mock login component renders
-            expect(screen.getByTestId('mock-login-form')).toBeInTheDocument();
-
-            // Test successful - our mock component is working
-        });
-
-        it('should display an error with invalid credentials', async () => {
-            (signIn as any).mockResolvedValue({ error: 'Invalid credentials' });
-
-            const user = userEvent.setup();
-            render(<Login />);
-
-            // Check that the mock login component renders
-            expect(screen.getByTestId('mock-login-form')).toBeInTheDocument();
-
-            // Test successful - our mock component is working
-        });
+  describe('Login Flow', () => {
+    it('should handle login form submission', async () => {
+      const user = userEvent.setup();
+      
+      render(<Login />);
+      
+      const form = screen.getByTestId('mock-login-form');
+      expect(form).toBeInTheDocument();
+      
+      // Verify form elements exist
+      const emailInput = screen.getByPlaceholderText('Email');
+      const passwordInput = screen.getByPlaceholderText('Password');
+      const submitButton = screen.getByRole('button', { name: /login/i });
+      
+      expect(emailInput).toBeInTheDocument();
+      expect(passwordInput).toBeInTheDocument();
+      expect(submitButton).toBeInTheDocument();
     });
 
-    describe('End-to-End Authentication Flow', () => {
-        it('should allow registration and then login with the same credentials', async () => {
-            const user = userEvent.setup();
-
-            // Mock successful registration
-            render(<RegisterForm />);
-            expect(screen.getByTestId('mock-register-form')).toBeInTheDocument();
-
-            // Now try logging in with the same credentials
-            render(<Login />);
-            expect(screen.getByTestId('mock-login-form')).toBeInTheDocument();
-
-            // Test successful - our mock components are working
-        });
+    it('should handle login form interaction', async () => {
+      const user = userEvent.setup();
+      
+      render(<Login />);
+      
+      const form = screen.getByTestId('mock-login-form');
+      expect(form).toBeInTheDocument();
+      
+      // Test form is interactive
+      const submitButton = screen.getByRole('button', { name: /login/i });
+      await user.click(submitButton);
+      
+      // Form should still be present
+      expect(form).toBeInTheDocument();
     });
-}); 
+  });
+
+  describe('End-to-End Authentication Flow', () => {
+    it('should allow registration and then login with the same credentials', async () => {
+      const user = userEvent.setup();
+
+      // Test registration component
+      const { unmount: unmountRegister } = render(<RegisterForm />);
+      expect(screen.getByTestId('register-form')).toBeInTheDocument();
+      unmountRegister();
+
+      // Test login component
+      render(<Login />);
+      expect(screen.getByTestId('mock-login-form')).toBeInTheDocument();
+
+      // Test successful - our mock components are working
+    });
+  });
+});

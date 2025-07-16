@@ -1,6 +1,7 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import db from "@/lib/db";
 
 const f = createUploadthing();
 
@@ -25,9 +26,33 @@ export const ourFileRouter = {
         })
         .onUploadComplete(async ({ metadata, file }) => {
             console.log("Upload complete for userId:", metadata.user.userId);
-            console.log("File URL:", file.ufsUrl);
+            console.log("File URL:", file.url);
 
-            return { uploadedBy: metadata.user.userId, url: file.ufsUrl };
+            // Store upload information in database for recent images
+            try {
+                await db.sql`
+                    INSERT INTO uploaded_files (
+                        filename, 
+                        original_filename, 
+                        file_path, 
+                        file_size, 
+                        file_type, 
+                        uploaded_at
+                    ) VALUES (
+                        ${file.key}, 
+                        ${file.name}, 
+                        ${file.url}, 
+                        ${file.size}, 
+                        ${file.type || 'image/unknown'}, 
+                        NOW()
+                    )
+                `;
+                console.log("Upload info stored in database");
+            } catch (error) {
+                console.error("Error storing upload info:", error);
+            }
+
+            return { uploadedBy: metadata.user.userId, url: file.url };
         }),
 } satisfies FileRouter;
 

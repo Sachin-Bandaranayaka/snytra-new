@@ -11,6 +11,16 @@ interface Review {
     review_text: string;
 }
 
+// Helper function to validate if a string is a valid URL
+function isValidImageUrl(url: string): boolean {
+    try {
+        const urlObj = new URL(url);
+        return urlObj.protocol === 'http:' || urlObj.protocol === 'https:' || urlObj.protocol === 'data:';
+    } catch (_) {
+        return false;
+    }
+}
+
 export default function ReviewSection() {
     const [reviews, setReviews] = useState<Review[]>([]);
     const [loading, setLoading] = useState(true);
@@ -137,13 +147,17 @@ export default function ReviewSection() {
                                             <div key={review.id} className="bg-white p-6 rounded-lg shadow-md">
                                                 <div className="flex items-center mb-4">
                                                     <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 mr-4">
-                                                        {review.customer_image_url ? (
+                                                        {review.customer_image_url && isValidImageUrl(review.customer_image_url) ? (
                                                             <Image
                                                                 src={review.customer_image_url}
                                                                 alt={review.customer_name}
                                                                 width={48}
                                                                 height={48}
                                                                 className="w-full h-full object-cover"
+                                                                onError={(e) => {
+                                                                    // Hide the image if it fails to load
+                                                                    e.currentTarget.style.display = 'none';
+                                                                }}
                                                             />
                                                         ) : (
                                                             <svg className="w-full h-full text-gray-400" fill="currentColor" viewBox="0 0 24 24">

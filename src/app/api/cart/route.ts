@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sql } from '@vercel/postgres';
 import { executeQuery } from '@/lib/db';
 import { convertNumericStrings, processCartItem } from '@/utils/dataConverter';
 
@@ -24,7 +23,7 @@ export async function GET(req: NextRequest) {
             [sessionId]
         );
 
-        if (cartResult.rows.length === 0) {
+        if (cartResult.length === 0) {
             return NextResponse.json(
                 {
                     sessionId,
@@ -36,7 +35,7 @@ export async function GET(req: NextRequest) {
             );
         }
 
-        const cart = cartResult.rows[0];
+        const cart = cartResult[0];
 
         // Get cart items
         const itemsResult = await executeQuery(
@@ -49,7 +48,7 @@ export async function GET(req: NextRequest) {
         );
 
         // Convert string numeric values to actual numbers
-        const items = convertNumericStrings(itemsResult.rows);
+        const items = convertNumericStrings(itemsResult);
 
         // Calculate totals
         const itemCount = items.reduce((total, item) => total + item.quantity, 0);
@@ -89,22 +88,20 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // Note: Serverless environment - using individual queries instead of transactions
+        // Use individual queries for serverless compatibility
         try {
-            await client.query('BEGIN');
-
             // Check if cart already exists
-            const existingCartResult = await client.query(
+            const existingCartResult = await executeQuery(
                 'SELECT id FROM carts WHERE session_id = $1',
                 [sessionId]
             );
 
             let cartId;
 
-            if (existingCartResult.rows.length > 0) {
+            if (existingCartResult.length > 0) {
                 // Update existing cart
-                cartId = existingCartResult.rows[0].id;
-                await client.query(
+                cartId = existingCartResult[0].id;
+                await executeQuery(
                     `UPDATE carts 
                      SET table_id = $1, customer_name = $2, customer_email = $3, customer_phone = $4, updated_at = NOW()
                      WHERE id = $5`,
@@ -112,16 +109,16 @@ export async function POST(req: NextRequest) {
                 );
 
                 // Delete existing items to replace with new ones
-                await client.query('DELETE FROM cart_items WHERE cart_id = $1', [cartId]);
+                await executeQuery('DELETE FROM cart_items WHERE cart_id = $1', [cartId]);
             } else {
                 // Create new cart
-                const newCartResult = await client.query(
+                const newCartResult = await executeQuery(
                     `INSERT INTO carts (session_id, table_id, customer_name, customer_email, customer_phone)
                      VALUES ($1, $2, $3, $4, $5)
                      RETURNING id`,
                     [sessionId, tableId || null, customerName || null, customerEmail || null, customerPhone || null]
                 );
-                cartId = newCartResult.rows[0].id;
+                cartId = newCartResult[0].id;
             }
 
             // Process items to ensure numeric values are numbers not strings
@@ -130,15 +127,13 @@ export async function POST(req: NextRequest) {
             // Insert cart items
             if (processedItems && processedItems.length > 0) {
                 for (const item of processedItems) {
-                    await client.query(
+                    await executeQuery(
                         `INSERT INTO cart_items (cart_id, menu_item_id, menu_item_name, quantity, price, subtotal, special_instructions)
                          VALUES ($1, $2, $3, $4, $5, $6, $7)`,
                         [cartId, item.menuItemId, item.menuItemName, item.quantity, item.price, item.subtotal, item.specialInstructions || null]
                     );
                 }
             }
-
-            await client.query('COMMIT');
 
             // Calculate totals with proper number types
             const itemCount = processedItems.reduce((total, item) => total + item.quantity, 0);
@@ -158,10 +153,7 @@ export async function POST(req: NextRequest) {
                 success: true
             });
         } catch (error) {
-            await client.query('ROLLBACK');
             throw error;
-        } finally {
-            client.release();
         }
     } catch (error: any) {
         console.error('Error saving cart:', error);
@@ -185,22 +177,20 @@ export async function DELETE(req: NextRequest) {
             );
         }
 
-        const pool = getConnectionPool();
-
         // Check if cart exists
-        const cartResult = await pool.query(
+        const cartResult = await executeQuery(
             'SELECT id FROM carts WHERE session_id = $1',
             [sessionId]
         );
 
-        if (cartResult.rows.length > 0) {
-            const cartId = cartResult.rows[0].id;
+        if (cartResult.length > 0) {
+            const cartId = cartResult[0].id;
 
             // Delete cart items first
-            await pool.query('DELETE FROM cart_items WHERE cart_id = $1', [cartId]);
+            await executeQuery('DELETE FROM cart_items WHERE cart_id = $1', [cartId]);
 
             // Then delete the cart
-            await pool.query('DELETE FROM carts WHERE id = $1', [cartId]);
+            await executeQuery('DELETE FROM carts WHERE id = $1', [cartId]);
         }
 
         return NextResponse.json({
