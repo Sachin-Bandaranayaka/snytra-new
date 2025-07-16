@@ -11,7 +11,7 @@ interface SubscriptionPlan {
     name: string;
     description: string;
     price: number;
-    billing_cycle: string;
+    billing_interval: string;
     features: string[];
     is_active: boolean;
     stripe_price_id?: string;
@@ -64,7 +64,7 @@ function PricingContent() {
             name: 'Basic',
             description: 'Perfect for small businesses',
             price: 49.99,
-            billing_cycle: 'monthly',
+            billing_interval: 'monthly',
             features: [
                 'Online ordering',
                 'Reservation management',
@@ -78,7 +78,7 @@ function PricingContent() {
             name: 'Standard',
             description: 'Great for growing businesses',
             price: 99.99,
-            billing_cycle: 'monthly',
+            billing_interval: 'monthly',
             features: [
                 'All Basic features',
                 'Customer management',
@@ -93,7 +93,7 @@ function PricingContent() {
             name: 'Premium',
             description: 'Complete solution for established businesses',
             price: 199.99,
-            billing_cycle: 'monthly',
+            billing_interval: 'monthly',
             features: [
                 'All Standard features',
                 'Multi-location support',
@@ -108,7 +108,7 @@ function PricingContent() {
             name: 'Basic Annual',
             description: 'Perfect for small businesses - Annual billing',
             price: 479.88,
-            billing_cycle: 'yearly',
+            billing_interval: 'yearly',
             features: [
                 'Online ordering',
                 'Reservation management',
@@ -122,7 +122,7 @@ function PricingContent() {
             name: 'Standard Annual',
             description: 'Great for growing businesses - Annual billing',
             price: 959.88,
-            billing_cycle: 'yearly',
+            billing_interval: 'yearly',
             features: [
                 'All Basic features',
                 'Customer management',
@@ -137,7 +137,7 @@ function PricingContent() {
             name: 'Premium Annual',
             description: 'Complete solution for established businesses - Annual billing',
             price: 1919.88,
-            billing_cycle: 'yearly',
+            billing_interval: 'yearly',
             features: [
                 'All Standard features',
                 'Multi-location support',
@@ -246,8 +246,8 @@ function PricingContent() {
     // Filter plans based on billing cycle and active status
     const filteredPlans = plans.filter(plan =>
         plan.is_active &&
-        (plan.billing_cycle === billingCycle ||
-            (billingCycle === 'monthly' && !plan.billing_cycle)) // Handle cases where billing_cycle might be missing
+        (plan.billing_interval === billingCycle ||
+            (billingCycle === 'monthly' && !plan.billing_interval)) // Handle cases where billing_interval might be missing
     );
 
     const handlePlanSelect = async (plan: SubscriptionPlan) => {
@@ -338,7 +338,7 @@ function PricingContent() {
             <SEO
                 title="Pricing | Snytra"
                 description="Choose the right subscription plan for your business management needs."
-                additionalMetadata={additionalMetadata}
+                schema={additionalMetadata}
             />
 
             {showSubscriptionAlert && (
@@ -533,4 +533,4 @@ export default function Pricing() {
             <PricingContent />
         </Suspense>
     );
-} 
+}
