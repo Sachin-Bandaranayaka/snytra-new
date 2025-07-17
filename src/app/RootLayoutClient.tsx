@@ -1,3 +1,5 @@
+// src/app/RootLayoutClient.tsx
+
 "use client";
 
 import { usePathname } from "next/navigation";
@@ -9,14 +11,28 @@ import NoticesBanner from "@/components/NoticesBanner";
 import { Suspense } from "react";
 import InitMaintenanceMode from "./InitMaintenanceMode";
 
+// Define the structure of the Contact Us JSON data
+// Duplicated here for type safety, but ideally in a shared types file.
+interface ContactUsData {
+    title: string;
+    description: string;
+    contactInfo: {
+        phone: string;
+        email: string;
+        address?: string;
+    };
+}
+
 export default function RootLayoutClient({
     children,
     siteName,
     logoUrl,
+    contactInfo, // New prop: contactInfo
 }: Readonly<{
     children: React.ReactNode;
     siteName: string;
     logoUrl: string;
+    contactInfo?: ContactUsData['contactInfo']; // Type for the new prop
 }>) {
     const pathname = usePathname();
     const isMenuRoute = pathname.startsWith('/menu');
@@ -50,7 +66,8 @@ export default function RootLayoutClient({
                         {children}
                     </main>
 
-                    {shouldShowNavigation && <Footer siteName={siteName} logoUrl={logoUrl} />}
+                    {/* Pass contactInfo to the Footer */}
+                    {shouldShowNavigation && <Footer siteName={siteName} logoUrl={logoUrl} contactInfo={contactInfo} />}
                 </div>
             </CartProvider>
         </AuthProvider>

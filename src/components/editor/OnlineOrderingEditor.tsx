@@ -1,5 +1,3 @@
-// src/components/editor/OnlineOrderingEditor.tsx
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -12,6 +10,7 @@ interface Link {
 interface FeatureItem {
     title: string;
     description: string;
+    svgPathD?: string; // Added svgPathD for the feature icon
 }
 interface OnlineOrderingData {
     title: string;
@@ -19,7 +18,7 @@ interface OnlineOrderingData {
     links: Link[];
     features: {
         title: string;
-        items: FeatureItem[];
+        items: FeatureItem[]; // Updated to use the new FeatureItem interface
     };
 }
 interface OnlineOrderingEditorProps {
@@ -108,11 +107,20 @@ export default function OnlineOrderingEditor({ initialContent, onChange }: Onlin
                 {content.features?.items?.map((item, index) => (
                     <div key={index} className="border p-3 rounded-md mb-2 bg-gray-50 relative">
                         <input placeholder="Feature Title" value={item.title} onChange={(e) => handleArrayChange(['features', 'items'], index, 'title', e.target.value)} className="block w-full border border-gray-300 rounded-md p-2 mb-2"/>
-                        <textarea placeholder="Feature Description" value={item.description} onChange={(e) => handleArrayChange(['features', 'items'], index, 'description', e.target.value)} className="block w-full border border-gray-300 rounded-md p-2"/>
+                        <textarea placeholder="Feature Description" value={item.description} onChange={(e) => handleArrayChange(['features', 'items'], index, 'description', e.target.value)} className="block w-full border border-gray-300 rounded-md p-2 mb-2"/>
+                        {/* Input for SVG Path Data (d attribute) */}
+                        <label className="block text-sm font-medium text-gray-700 mt-2 mb-1">SVG Path Data (d attribute)</label>
+                        <input
+                            type="text"
+                            placeholder="M5 13l4 4L19 7" // Example path for guidance
+                            value={item.svgPathD || ''}
+                            onChange={(e) => handleArrayChange(['features', 'items'], index, 'svgPathD', e.target.value)}
+                            className="block w-full border border-gray-300 rounded-md p-2 font-mono text-xs"
+                        />
                         <button type="button" onClick={() => removeArrayItem(['features', 'items'], index)} className="absolute top-2 right-2 text-red-500 hover:text-red-700 text-xs">Remove</button>
                     </div>
                 ))}
-                <button type="button" onClick={() => addArrayItem(['features', 'items'], { title: '', description: ''})} className="text-sm text-blue-600 hover:text-blue-800 mt-2">Add Feature Item</button>
+                <button type="button" onClick={() => addArrayItem(['features', 'items'], { title: '', description: '', svgPathD: '' })} className="text-sm text-blue-600 hover:text-blue-800 mt-2">Add Feature Item</button>
             </div>
         </div>
     );

@@ -1,3 +1,5 @@
+// src/app/api/users/[id]/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/db';
 import bcrypt from 'bcrypt';

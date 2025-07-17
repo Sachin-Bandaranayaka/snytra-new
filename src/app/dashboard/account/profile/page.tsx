@@ -1,3 +1,5 @@
+// src/app/dashboard/account/profile/page.tsx
+
 "use client";
 
 import { useState, useEffect, FormEvent } from 'react';

@@ -216,7 +216,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "/Users/sachin/Documents/snytra-new/src/generated/prisma",
+      "value": "D:\\Projects\\snytra-new\\src\\generated\\prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -225,17 +225,16 @@ const config = {
     "binaryTargets": [
       {
         "fromEnvVar": null,
-        "value": "darwin-arm64",
+        "value": "windows",
         "native": true
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "/Users/sachin/Documents/snytra-new/prisma/schema.prisma",
+    "sourceFilePath": "D:\\Projects\\snytra-new\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": null,
-    "schemaEnvPath": "../../../.env"
+    "rootEnvPath": null
   },
   "relativePath": "../../../prisma",
   "clientVersion": "6.6.0",

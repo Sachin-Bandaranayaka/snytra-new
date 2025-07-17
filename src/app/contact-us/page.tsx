@@ -13,6 +13,7 @@ interface ContactUsData {
     contactInfo: {
         phone: string;
         email: string;
+        address?: string; // Added here
     };
 }
 
@@ -23,18 +24,18 @@ interface ContactUsData {
  */
 async function getPageData(slug: string): Promise<ContactUsData | null> {
     const query = 'SELECT content FROM pages WHERE slug = $1 AND status = $2 LIMIT 1';
-    
+
     try {
         // The content from DB will be in the format { "ContactUs": { ... } }
         const result = await executeQuery<{ content: { ContactUs: ContactUsData } }[]>(query, [slug, 'published']);
-        
+
         if (result && result.length > 0 && result[0].content && result[0].content.ContactUs) {
             return result[0].content.ContactUs;
         }
     } catch (error) {
         console.error(`Failed to fetch page data for slug "${slug}":`, error);
     }
-    
+
     return null;
 }
 
@@ -111,7 +112,13 @@ export default async function ContactUs() {
                                 <h3 className="text-xl font-bold">Visit Us</h3>
                             </div>
                             <p className="text-darkGray">
-                                123 Main Street, City, Country (this is static)
+                                {pageContent.contactInfo.address ? (
+                                    <>
+                                        {pageContent.contactInfo.address}
+                                    </>
+                                ) : (
+                                    "Address not available" // Fallback if address is not set
+                                )}
                             </p>
                         </div>
                     </div>

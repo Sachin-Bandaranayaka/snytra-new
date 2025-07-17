@@ -5,14 +5,18 @@ import { useState, useEffect } from 'react';
 
 // --- Interfaces for your JSON structure ---
 interface Link { text: string; href: string; }
-interface FeatureItem { title: string; description: string; }
+interface FeatureItem {
+    title: string;
+    description: string;
+    svgPathD?: string; // Added svgPathD for the feature icon
+}
 interface LeadGenerationData {
     title: string;
     description: string;
     links: Link[];
     features: {
         title: string;
-        items: FeatureItem[];
+        items: FeatureItem[]; // Updated to use the new FeatureItem interface
     };
 }
 interface LeadGenerationEditorProps {
@@ -72,6 +76,7 @@ export default function LeadGenerationEditor({ initialContent, onChange }: LeadG
                 <input type="text" value={content.title || ''} onChange={(e) => handleNestedChange(['title'], e.target.value)} className="block w-full border border-gray-300 rounded-md p-2" />
                 <label className="block text-sm font-medium text-gray-700 mt-2 mb-1">Description</label>
                 <textarea value={content.description || ''} onChange={(e) => handleNestedChange(['description'], e.target.value)} rows={2} className="block w-full border border-gray-300 rounded-md p-2" />
+
                 <h4 className="text-md font-semibold mt-4 mb-2">Links</h4>
                 {content.links?.map((link, index) => (
                     <div key={index} className="grid grid-cols-2 gap-2 border p-3 rounded-md mb-2 bg-gray-50 relative">
@@ -87,15 +92,25 @@ export default function LeadGenerationEditor({ initialContent, onChange }: LeadG
                 <h3 className="text-lg font-semibold mb-2">Features Section</h3>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Section Title</label>
                 <input type="text" value={content.features?.title || ''} onChange={(e) => handleNestedChange(['features', 'title'], e.target.value)} className="block w-full border border-gray-300 rounded-md p-2" />
+
                 <h4 className="text-md font-semibold mt-4 mb-2">Feature Items</h4>
                 {content.features?.items?.map((item, index) => (
                     <div key={index} className="border p-3 rounded-md mb-2 bg-gray-50 relative">
                         <input placeholder="Feature Title" value={item.title} onChange={(e) => handleArrayChange(['features', 'items'], index, 'title', e.target.value)} className="block w-full border border-gray-300 rounded-md p-2 mb-2"/>
-                        <textarea placeholder="Feature Description" value={item.description} onChange={(e) => handleArrayChange(['features', 'items'], index, 'description', e.target.value)} className="block w-full border border-gray-300 rounded-md p-2"/>
+                        <textarea placeholder="Feature Description" value={item.description} onChange={(e) => handleArrayChange(['features', 'items'], index, 'description', e.target.value)} className="block w-full border border-gray-300 rounded-md p-2 mb-2"/>
+                        {/* Input for SVG Path Data (d attribute) */}
+                        <label className="block text-sm font-medium text-gray-700 mt-2 mb-1">SVG Path Data (d attribute)</label>
+                        <input
+                            type="text"
+                            placeholder="M13 10V3L4 14h7v7l9-11h-7z" // Example path for guidance
+                            value={item.svgPathD || ''}
+                            onChange={(e) => handleArrayChange(['features', 'items'], index, 'svgPathD', e.target.value)}
+                            className="block w-full border border-gray-300 rounded-md p-2 font-mono text-xs"
+                        />
                         <button type="button" onClick={() => removeArrayItem(['features', 'items'], index)} className="absolute top-2 right-2 text-red-500 hover:text-red-700 text-xs">Remove</button>
                     </div>
                 ))}
-                <button type="button" onClick={() => addArrayItem(['features', 'items'], { title: '', description: ''})} className="text-sm text-blue-600 hover:text-blue-800 mt-2">Add Feature Item</button>
+                <button type="button" onClick={() => addArrayItem(['features', 'items'], { title: '', description: '', svgPathD: '' })} className="text-sm text-blue-600 hover:text-blue-800 mt-2">Add Feature Item</button>
             </div>
         </div>
     );

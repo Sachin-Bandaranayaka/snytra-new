@@ -8,13 +8,19 @@ import { executeQuery } from '@/lib/db'; // Import db helper
 import { notFound } from 'next/navigation'; // Import notFound
 
 // Define the structure of the page content
+interface LinkItem { text: string; href: string; attributes: { class: string; } };
+interface FeatureItem {
+    title: string;
+    description: string;
+    svgPathD?: string; // Added svgPathD for the feature icon
+}
 interface AiWhatsappData {
     title: string;
     description: string;
-    links: Array<{ text: string; href: string; attributes: { class: string; } }>;
+    links: LinkItem[];
     features: {
         title: string;
-        items: Array<{ title: string; description: string; }>;
+        items: FeatureItem[];
     };
 }
 
@@ -87,7 +93,7 @@ export default async function AIWhatsAppMessaging() {
                             </p>
                             <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
                                 {pageContent.links.map((link, index) => (
-                                     <Link key={index} href={link.href} className={link.attributes.class}>
+                                    <Link key={index} href={link.href} className={link.attributes.class}>
                                         {link.text}
                                     </Link>
                                 ))}
@@ -109,16 +115,43 @@ export default async function AIWhatsAppMessaging() {
                         {pageContent.features.title}
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {pageContent.features.items.map((item, index) => (
-                            <div key={index} className="bg-white p-8 rounded-lg shadow-md">
-                                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-6">
-                                    {/* Corresponding feature icon would go here */}
-                                    <svg>...</svg>
+                        {pageContent.features.items.map((item, index) => {
+                            // --- DEBUGGING LOG ---
+                            console.log(`AI WhatsApp Feature: ${item.title}, svgPathD:`, item.svgPathD);
+                            // --- END DEBUGGING LOG ---
+                            const isValidSvgPath = typeof item.svgPathD === 'string' && item.svgPathD.trim() !== '';
+
+                            return (
+                                <div key={index} className="bg-white p-8 rounded-lg shadow-md">
+                                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-6">
+                                        {/* Icon SVG */}
+                                        {isValidSvgPath ? (
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                className="h-6 w-6" // Consistent size
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke="currentColor"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d={item.svgPathD} // Dynamic path data
+                                                />
+                                            </svg>
+                                        ) : (
+                                            // Fallback icon (a generic checkmark)
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        )}
+                                    </div>
+                                    <h3 className="text-xl font-bold mb-4">{item.title}</h3>
+                                    <p>{item.description}</p>
                                 </div>
-                                <h3 className="text-xl font-bold mb-4">{item.title}</h3>
-                                <p>{item.description}</p>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             </section>
@@ -199,6 +232,7 @@ export default async function AIWhatsAppMessaging() {
                         </div>
                     </div>
                 </div>
-            </section>        </>
+            </section>
+        </>
     );
 }
