@@ -6,6 +6,22 @@ import SEO, { createArticleSchema } from "@/components/SEO";
 import { sql } from "@/lib/db";
 import { Pagination } from "@/components/ui/Pagination";
 
+interface BlogPost {
+    id: number;
+    title: string;
+    slug: string;
+    excerpt: string;
+    image: string;
+    publishedAt: string;
+    author: string;
+    authorImage: string;
+    category: string;
+}
+
+interface Category {
+    name: string;
+}
+
 export const metadata: Metadata = {
     title: "Blog & Resources | RestaurantOS",
     description: "Explore the latest articles, guides, and tips for optimizing your restaurant operations and growing your business.",
@@ -30,7 +46,7 @@ async function getBlogPosts(page: number = 1, limit: number = 10) {
         const offset = (page - 1) * limit;
         
         // Get posts with pagination
-        const posts = await sql`
+        const postsResult = await sql`
             SELECT p.id, p.title, 
                   CASE
                     WHEN p.slug IS NULL OR p.slug = '' THEN LOWER(REPLACE(REPLACE(p.title, ' ', '-'), ',', ''))
@@ -49,6 +65,7 @@ async function getBlogPosts(page: number = 1, limit: number = 10) {
             ORDER BY p.published_at DESC
             LIMIT ${limit} OFFSET ${offset}
         `;
+        const posts = Array.isArray(postsResult) ? postsResult as BlogPost[] : [];
 
         // Get total count for pagination
         const totalResult = await sql`
@@ -89,12 +106,13 @@ async function getBlogPosts(page: number = 1, limit: number = 10) {
 // This function fetches categories from the database
 async function getCategories() {
     try {
-        const categories = await sql`
+        const categoriesResult = await sql`
             SELECT DISTINCT c.name
             FROM blog_categories c
             JOIN blog_post_categories pc ON c.id = pc.category_id
             JOIN blog_posts p ON pc.post_id = p.id AND p.status = 'published'
         `;
+        const categories = Array.isArray(categoriesResult) ? categoriesResult as Category[] : [];
 
         return ["All", ...categories.map(c => c.name)];
     } catch (error) {
@@ -106,10 +124,11 @@ async function getCategories() {
 export default async function BlogPage({ 
     searchParams 
 }: { 
-    searchParams: { page?: string } 
+    searchParams: Promise<{ page?: string }> 
 }) {
     // Extract and validate page parameter
-    const pageParam = searchParams.page;
+    const resolvedSearchParams = await searchParams;
+    const pageParam = resolvedSearchParams.page;
     const currentPage = pageParam ? parseInt(pageParam) : 1;
     
     // Validate page number
