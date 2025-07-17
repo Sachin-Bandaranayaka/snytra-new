@@ -5,7 +5,11 @@ import { useState, useEffect } from 'react';
 
 // Interfaces for the AI WhatsApp Messaging JSON structure
 interface Link { text: string; href: string; }
-interface FeatureItem { title: string; description: string; }
+interface FeatureItem {
+    title: string;
+    description: string;
+    svgPathD?: string; // Added svgPathD for the feature icon
+}
 interface AiWhatsappData {
     title: string;
     description: string;
@@ -91,11 +95,20 @@ export default function AiWhatsappEditor({ initialContent, onChange }: AiWhatsap
                 {content.features?.items?.map((item, index) => (
                     <div key={index} className="border p-3 rounded-md mb-2 bg-gray-50 relative">
                         <input placeholder="Feature Title" value={item.title} onChange={(e) => handleArrayChange(['features', 'items'], index, 'title', e.target.value)} className="block w-full border border-gray-300 rounded-md p-2 mb-2"/>
-                        <textarea placeholder="Feature Description" value={item.description} onChange={(e) => handleArrayChange(['features', 'items'], index, 'description', e.target.value)} className="block w-full border border-gray-300 rounded-md p-2"/>
+                        <textarea placeholder="Feature Description" value={item.description} onChange={(e) => handleArrayChange(['features', 'items'], index, 'description', e.target.value)} className="block w-full border border-gray-300 rounded-md p-2 mb-2"/>
+                        {/* Input for SVG Path Data (d attribute) */}
+                        <label className="block text-sm font-medium text-gray-700 mt-2 mb-1">SVG Path Data (d attribute)</label>
+                        <input
+                            type="text"
+                            placeholder="M13 10V3L4 14h7v7l9-11h-7z"
+                            value={item.svgPathD || ''}
+                            onChange={(e) => handleArrayChange(['features', 'items'], index, 'svgPathD', e.target.value)}
+                            className="block w-full border border-gray-300 rounded-md p-2 font-mono text-xs"
+                        />
                         <button type="button" onClick={() => removeArrayItem(['features', 'items'], index)} className="absolute top-2 right-2 text-red-500 hover:text-red-700 text-xs">Remove</button>
                     </div>
                 ))}
-                <button type="button" onClick={() => addArrayItem(['features', 'items'], { title: '', description: ''})} className="text-sm text-blue-600 hover:text-blue-800 mt-2">Add Feature Item</button>
+                <button type="button" onClick={() => addArrayItem(['features', 'items'], { title: '', description: '', svgPathD: '' })} className="text-sm text-blue-600 hover:text-blue-800 mt-2">Add Feature Item</button>
             </div>
         </div>
     );

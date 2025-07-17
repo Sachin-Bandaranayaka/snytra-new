@@ -10,6 +10,7 @@ interface Principle {
 interface Feature {
     title: string;
     description: string;
+    svgPathD?: string; // Changed from 'svgCode' to 'svgPathD'
 }
 interface CallToAction {
     title: string;
@@ -38,6 +39,7 @@ interface AboutUsData {
     };
     whyChooseUs: {
         title: string;
+        description?: string; // Added optional description to whyChooseUs
         features: Feature[];
     };
     callToAction: CallToAction;
@@ -147,16 +149,27 @@ export default function AboutUsEditor({ initialContent, onChange }: AboutUsEdito
                 <h3 className="text-lg font-semibold mb-2">Why Choose Us Section</h3>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Section Title</label>
                 <input type="text" value={content.whyChooseUs?.title || ''} onChange={(e) => handleNestedChange(['whyChooseUs', 'title'], e.target.value)} className="block w-full border border-gray-300 rounded-md p-2" />
+                <label className="block text-sm font-medium text-gray-700 mt-2 mb-1">Section Description (Optional)</label>
+                <textarea value={content.whyChooseUs?.description || ''} onChange={(e) => handleNestedChange(['whyChooseUs', 'description'], e.target.value)} rows={2} className="block w-full border border-gray-300 rounded-md p-2" />
                 
                 <h4 className="text-md font-semibold mt-4 mb-2">Features</h4>
                 {content.whyChooseUs?.features?.map((feature, index) => (
-                     <div key={index} className="border p-3 rounded-md mb-2 bg-gray-50 relative">
+                    <div key={index} className="border p-3 rounded-md mb-2 bg-gray-50 relative">
                         <input placeholder="Feature Title" value={feature.title} onChange={(e) => handleArrayChange(['whyChooseUs', 'features'], index, 'title', e.target.value)} className="block w-full border border-gray-300 rounded-md p-2 mb-2"/>
-                        <textarea placeholder="Feature Description" value={feature.description} onChange={(e) => handleArrayChange(['whyChooseUs', 'features'], index, 'description', e.target.value)} className="block w-full border border-gray-300 rounded-md p-2"/>
-                         <button type="button" onClick={() => removeArrayItem(['whyChooseUs', 'features'], index)} className="absolute top-2 right-2 text-red-500 hover:text-red-700 text-xs">Remove</button>
+                        <textarea placeholder="Feature Description" value={feature.description} onChange={(e) => handleArrayChange(['whyChooseUs', 'features'], index, 'description', e.target.value)} className="block w-full border border-gray-300 rounded-md p-2 mb-2"/>
+                        {/* Input for SVG Path Data (d attribute) */}
+                        <label className="block text-sm font-medium text-gray-700 mt-2 mb-1">SVG Path Data (d attribute)</label>
+                        <input 
+                            type="text"
+                            placeholder="M13 10V3L4 14h7v7l9-11h-7z" 
+                            value={feature.svgPathD || ''} 
+                            onChange={(e) => handleArrayChange(['whyChooseUs', 'features'], index, 'svgPathD', e.target.value)} 
+                            className="block w-full border border-gray-300 rounded-md p-2 font-mono text-xs"
+                        />
+                        <button type="button" onClick={() => removeArrayItem(['whyChooseUs', 'features'], index)} className="absolute top-2 right-2 text-red-500 hover:text-red-700 text-xs">Remove</button>
                     </div>
                 ))}
-                 <button type="button" onClick={() => addArrayItem(['whyChooseUs', 'features'], { title: '', description: ''})} className="text-sm text-blue-600 hover:text-blue-800 mt-2">Add Feature</button>
+                <button type="button" onClick={() => addArrayItem(['whyChooseUs', 'features'], { title: '', description: '', svgPathD: '' })} className="text-sm text-blue-600 hover:text-blue-800 mt-2">Add Feature</button>
             </div>
 
             {/* Call To Action Section */}

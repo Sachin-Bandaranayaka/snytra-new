@@ -1,4 +1,3 @@
-// src/app/products/online-ordering-system/page.tsx
 "use client";
 
 import Image from "next/image";
@@ -10,13 +9,19 @@ import FeatureComparisonTable from "@/components/FeatureComparisonTable";
 import DashboardCarousel from "@/components/DashboardCarousel";
 
 // --- Define the new interface for dynamic page content ---
+interface FeatureItem {
+    title: string;
+    description: string;
+    svgPathD?: string; // Added svgPathD for the feature icon
+}
+
 interface PageContent {
     title: string;
     description: string;
     links: Array<{ text: string; href: string; attributes: { class: string; } }>;
     features: {
         title: string;
-        items: Array<{ title: string; description: string; }>;
+        items: FeatureItem[]; // Updated to use the new FeatureItem interface
     };
 }
 
@@ -25,7 +30,6 @@ interface SubscriptionPlan { id: number; name: string; description: string; pric
 interface Review { id: number; name: string; business: string; content: string; rating: number; product: string; }
 
 export default function OnlineOrderingSystem() {
-    // --- All your existing state variables and hooks remain ---
     const router = useRouter();
     const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
     const [reviews, setReviews] = useState<Review[]>([]);
@@ -298,12 +302,12 @@ const filteredPlans = plans.filter(plan => plan.billing_cycle === billingCycle &
     // --- RENDER ---
     // You can show a loading state for the whole page while content loads
     if (contentLoading) {
-        return <div>Loading System Details...</div>
+        return <div className="min-h-screen flex items-center justify-center text-primary text-xl">Loading System Details...</div>;
     }
 
     // If content fails to load but you want to show the rest, you can handle that
     if (!pageContent) {
-        return <div>Error: Could not load page content.</div>
+        return <div className="min-h-screen flex items-center justify-center text-red-500 text-xl">Error: Could not load page content.</div>;
     }
 
     return (
@@ -396,17 +400,42 @@ const filteredPlans = plans.filter(plan => plan.billing_cycle === billingCycle &
                         {pageContent.features.title} {/* DYNAMIC */}
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {pageContent.features.items.map((item, index) => (
-                            <div key={index} className="bg-white p-8 rounded-lg shadow-md border border-lightGray hover:shadow-lg transition-shadow">
-                                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-6">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path d="M..." /> {/* Your existing icon path */}
-                                    </svg>
+                        {pageContent.features.items.map((item, index) => {
+                            // --- DEBUGGING LOG ---
+                            console.log(`Online Ordering Feature: ${item.title}, svgPathD:`, item.svgPathD);
+                            // --- END DEBUGGING LOG ---
+                            const isValidSvgPath = typeof item.svgPathD === 'string' && item.svgPathD.trim() !== '';
+
+                            return (
+                                <div key={index} className="bg-white p-8 rounded-lg shadow-md border border-lightGray hover:shadow-lg transition-shadow">
+                                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-6">
+                                        {isValidSvgPath ? (
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                className="h-6 w-6" // Consistent size and color
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke="currentColor"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d={item.svgPathD} // Dynamic path data
+                                                />
+                                            </svg>
+                                        ) : (
+                                            // Fallback SVG if no valid path data is provided
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        )}
+                                    </div>
+                                    <h3 className="text-xl font-bold mb-4">{item.title}</h3>
+                                    <p className="text-charcoal">{item.description}</p>
                                 </div>
-                                <h3 className="text-xl font-bold mb-4">{item.title}</h3>
-                                <p className="text-charcoal">{item.description}</p>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             </section>
@@ -484,7 +513,7 @@ const filteredPlans = plans.filter(plan => plan.billing_cycle === billingCycle &
                                             <button
                                                 onClick={() => handlePlanSelect(plan)}
                                                 className={`mt-8 block w-full py-3 px-4 rounded-md text-center font-medium transition-colors cursor-pointer
-                                                ${isPopular
+                                                    ${isPopular
                                                         ? 'bg-primary text-white hover:bg-primary/90'
                                                         : 'bg-white text-primary border-2 border-primary hover:bg-primary/10'
                                                     }`}
@@ -598,6 +627,7 @@ const filteredPlans = plans.filter(plan => plan.billing_cycle === billingCycle &
                         </div>
                     </div>
                 </div>
-            </section>        </>
+            </section>
+        </>
     );
 }
