@@ -11,6 +11,7 @@ interface ContactUsData {
     contactInfo: {
         phone: string;
         email: string;
+        address?: string; // Add the address field here
     };
 }
 
@@ -65,6 +66,9 @@ export default function ContactUsEditor({ initialContent, onChange }: ContactUsE
                 <input type="text" value={content.contactInfo?.phone || ''} onChange={(e) => handleNestedChange(['contactInfo', 'phone'], e.target.value)} className="block w-full border border-gray-300 rounded-md p-2" />
                 <label className="block text-sm font-medium text-gray-700 mt-2 mb-1">Email Address</label>
                 <input type="email" value={content.contactInfo?.email || ''} onChange={(e) => handleNestedChange(['contactInfo', 'email'], e.target.value)} className="block w-full border border-gray-300 rounded-md p-2" />
+                {/* New: Address Field */}
+                <label className="block text-sm font-medium text-gray-700 mt-2 mb-1">Address</label>
+                <input type="text" value={content.contactInfo?.address || ''} onChange={(e) => handleNestedChange(['contactInfo', 'address'], e.target.value)} className="block w-full border border-gray-300 rounded-md p-2" />
             </div>
         </div>
     );

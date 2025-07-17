@@ -51,6 +51,9 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'utfs.io',
+      },{
+        protocol: 'https', // Or 'http' if your image is served over HTTP
+        hostname: 'dngvk46yy8.ufs.sh',
       }
     ],
   },
