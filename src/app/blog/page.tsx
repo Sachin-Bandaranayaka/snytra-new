@@ -1,8 +1,10 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Metadata } from "next";
+import { redirect } from "next/navigation";
 import SEO, { createArticleSchema } from "@/components/SEO";
 import { sql } from "@/lib/db";
+import { Pagination } from "@/components/ui/Pagination";
 
 export const metadata: Metadata = {
     title: "Blog & Resources | RestaurantOS",
@@ -22,9 +24,12 @@ export const metadata: Metadata = {
     },
 };
 
-// This function fetches blog posts from the database
-async function getBlogPosts() {
+// This function fetches blog posts from the database with pagination
+async function getBlogPosts(page: number = 1, limit: number = 10) {
     try {
+        const offset = (page - 1) * limit;
+        
+        // Get posts with pagination
         const posts = await sql`
             SELECT p.id, p.title, 
                   CASE
@@ -42,14 +47,42 @@ async function getBlogPosts() {
             WHERE p.status = 'published'
             GROUP BY p.id, u.name, u.profile_image, c.name
             ORDER BY p.published_at DESC
-            LIMIT 10
+            LIMIT ${limit} OFFSET ${offset}
         `;
 
-        return posts;
+        // Get total count for pagination
+        const totalResult = await sql`
+            SELECT COUNT(DISTINCT p.id) as total
+            FROM blog_posts p
+            WHERE p.status = 'published'
+        `;
+
+        const total = parseInt(totalResult[0].total);
+        const totalPages = Math.ceil(total / limit);
+
+        return {
+            posts,
+            pagination: {
+                total,
+                totalPages,
+                currentPage: page,
+                hasNextPage: page < totalPages,
+                hasPrevPage: page > 1
+            }
+        };
     } catch (error) {
         console.error('Error fetching blog posts:', error);
-        // Return empty array if query fails
-        return [];
+        // Return empty result if query fails
+        return {
+            posts: [],
+            pagination: {
+                total: 0,
+                totalPages: 0,
+                currentPage: 1,
+                hasNextPage: false,
+                hasPrevPage: false
+            }
+        };
     }
 }
 
@@ -70,9 +103,27 @@ async function getCategories() {
     }
 }
 
-export default async function BlogPage() {
-    const posts = await getBlogPosts();
+export default async function BlogPage({ 
+    searchParams 
+}: { 
+    searchParams: { page?: string } 
+}) {
+    // Extract and validate page parameter
+    const pageParam = searchParams.page;
+    const currentPage = pageParam ? parseInt(pageParam) : 1;
+    
+    // Validate page number
+    if (currentPage < 1 || isNaN(currentPage)) {
+        redirect('/blog');
+    }
+    
+    const { posts, pagination } = await getBlogPosts(currentPage, 10);
     const categories = await getCategories();
+    
+    // Redirect if page number is too high
+    if (currentPage > pagination.totalPages && pagination.totalPages > 0) {
+        redirect('/blog');
+    }
 
     // Create schema.org Article markup for the first post
     const schemaArticle = posts.length > 0 ? createArticleSchema({
@@ -191,27 +242,12 @@ export default async function BlogPage() {
                     </div>
 
                     {/* Pagination */}
-                    <div className="mt-12 flex justify-center">
-                        <div className="flex space-x-2">
-                            <button
-                                className="px-4 py-2 border border-gray-300 rounded-md text-charcoal hover:bg-gray-50 disabled:opacity-50"
-                                disabled
-                            >
-                                Previous
-                            </button>
-                            <button className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90">
-                                1
-                            </button>
-                            <button className="px-4 py-2 border border-gray-300 rounded-md text-charcoal hover:bg-gray-50">
-                                2
-                            </button>
-                            <button className="px-4 py-2 border border-gray-300 rounded-md text-charcoal hover:bg-gray-50">
-                                3
-                            </button>
-                            <button className="px-4 py-2 border border-gray-300 rounded-md text-charcoal hover:bg-gray-50">
-                                Next
-                            </button>
-                        </div>
+                    <div className="mt-12">
+                        <Pagination 
+                            currentPage={pagination.currentPage}
+                            totalPages={pagination.totalPages}
+                            className=""
+                        />
                     </div>
                 </div>
             </section>
@@ -245,4 +281,4 @@ export default async function BlogPage() {
             </section>
         </>
     );
-} 
+}
