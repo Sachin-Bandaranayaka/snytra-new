@@ -339,6 +339,9 @@ const RegisterForm: React.FC = () => {
         return (
           <div className="space-y-4" data-testid="legal-compliance-step">
             <h2 className="text-xl font-semibold text-charcoal mb-6">Legal Agreements</h2>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+              <p className="text-sm text-red-600">Please accept the terms and privacy policy</p>
+            </div>
             <div className="space-y-6">
               <div className="flex items-start">
                 <input
@@ -350,11 +353,23 @@ const RegisterForm: React.FC = () => {
                 />
                 <label htmlFor="termsAccepted" className="ml-3 block text-sm text-gray-700">
                   I agree to the{' '}
-                  <Link href="/terms" className="text-primary hover:text-primary-dark transition-colors font-medium">
+                  <Link href="/terms-of-service" className="text-primary hover:text-primary-dark transition-colors font-medium">
                     Terms of Service
                   </Link>
-                  {' '}and{' '}
-                  <Link href="/privacy" className="text-primary hover:text-primary-dark transition-colors font-medium">
+                  {' '}*
+                </label>
+              </div>
+              <div className="flex items-start">
+                <input
+                  type="checkbox"
+                  id="privacyAccepted"
+                  checked={legalCompliance.privacyAccepted}
+                  onChange={(e) => setLegalCompliance({...legalCompliance, privacyAccepted: e.target.checked})}
+                  className="mt-1 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                />
+                <label htmlFor="privacyAccepted" className="ml-3 block text-sm text-gray-700">
+                  I agree to the{' '}
+                  <Link href="/privacy-policy" className="text-primary hover:text-primary-dark transition-colors font-medium">
                     Privacy Policy
                   </Link>
                   {' '}*

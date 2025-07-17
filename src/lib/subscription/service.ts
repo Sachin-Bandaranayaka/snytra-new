@@ -380,6 +380,46 @@ export class SubscriptionService {
     }
   }
 
+  /**
+   * Get Stripe customer ID for a user
+   */
+  async getCustomerStripeId(userId: number): Promise<string | null> {
+    try {
+      const query = 'SELECT stripe_customer_id FROM users WHERE id = $1';
+      const result = await executeQuery(query, [userId]);
+      
+      if (result.length === 0) {
+        return null;
+      }
+      
+      return result[0].stripe_customer_id || null;
+    } catch (error) {
+      console.error('Error getting customer Stripe ID:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Log subscription events (simplified version)
+   */
+  async logSubscriptionEvent(eventData: {
+    userId: number;
+    eventType: string;
+    subscriptionPlanId?: number;
+    eventData?: any;
+  }): Promise<void> {
+    try {
+      // For now, just log to console
+      // In a production environment, you might want to store this in a database
+      console.log('Subscription Event:', {
+        timestamp: new Date().toISOString(),
+        ...eventData
+      });
+    } catch (error) {
+      console.error('Error logging subscription event:', error);
+    }
+  }
+
   // Private helper methods
   private async getFreeSubscriptionStatus(): Promise<SubscriptionStatus> {
     const freePlan: SubscriptionPlan = {
